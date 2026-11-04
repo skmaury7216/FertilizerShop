@@ -1,0 +1,9 @@
+.git
+.vscode
+.settings
+.idea
+data
+*.md
+*.log
+target/*
+!target/fertilizershop-1.0.0.jar

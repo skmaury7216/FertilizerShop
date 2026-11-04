@@ -1,0 +1,14 @@
+<!doctype html><html lang="hi" xmlns:th="http://www.thymeleaf.org"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Product form • मौर्या खाद भंडार</title><link rel="stylesheet" th:href="@{/css/main.css}"></head><body><div class="layout"><div th:replace="~{fragments :: sidebar}"></div><main class="main"><div th:replace="~{fragments :: topbar}"></div><div th:replace="~{fragments :: flash}"></div>
+<div class="panel form-panel"><h3 th:text="${product.id == null} ? 'नया उत्पाद जोड़ें' : 'उत्पाद जानकारी बदलें'"></h3>
+<form th:action="@{/products}" method="post"><input type="hidden" name="id" th:if="${product.id != null}" th:value="${product.id}"><div class="form-grid">
+<label>Product Name *<input required maxlength="150" name="name" th:value="${product.name}" placeholder="उदा. यूरिया 45 KG"></label>
+<label>Brand<input name="brand" th:value="${product.brand}" placeholder="IFFCO"></label>
+<label>Category<select name="category"><option th:selected="${product.category == 'Fertilizer'}">Fertilizer</option><option th:selected="${product.category == 'Seeds'}">Seeds</option><option th:selected="${product.category == 'Micronutrient'}">Micronutrient</option><option th:selected="${product.category == 'Other'}">Other</option></select></label>
+<label>Unit<select name="unit"><option th:selected="${product.unit == 'Bag'}">Bag</option><option th:selected="${product.unit == 'Kg'}">Kg</option><option th:selected="${product.unit == 'Packet'}">Packet</option><option th:selected="${product.unit == 'Bottle'}">Bottle</option></select></label>
+<label>Purchase Price (₹) *<input type="number" min="0" step="0.01" required name="purchasePrice" th:value="${product.purchasePrice}"></label>
+<label>Selling Price (₹) *<input type="number" min="0" step="0.01" required name="sellingPrice" th:value="${product.sellingPrice}"></label>
+<label>Low-stock Alert Level<input type="number" min="0" name="reorderLevel" th:value="${product.reorderLevel}"></label>
+<label>Description<input name="description" th:value="${product.description}" placeholder="Optional"></label></div>
+<p class="note">Starting stock शून्य रहेगा। Stock Purchase section से खरीद दर्ज करें।</p>
+<div class="form-actions"><a class="button light" th:href="@{/products}">Cancel</a><button class="button" type="submit">Save Product</button></div></form></div>
+</main></div><script th:src="@{/js/main.js}"></script></body></html>

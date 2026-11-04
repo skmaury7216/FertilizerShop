@@ -1,0 +1,17 @@
+services:
+  fertilizershop:
+    build: .
+    image: fertilizershop:latest
+    container_name: fertilizershop
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8090:8080"
+    environment:
+      SHOP_ADMIN_USER: ${SHOP_ADMIN_USER:?Set SHOP_ADMIN_USER in local .env file}
+      SHOP_ADMIN_PASSWORD: ${SHOP_ADMIN_PASSWORD:?Set SHOP_ADMIN_PASSWORD in local .env file}
+      DB_URL: "jdbc:h2:file:./data/fertilizershop;DB_CLOSE_ON_EXIT=FALSE"
+      SHOP_DEMO_DATA: "false"
+    volumes:
+      - fertilizershop_data:/app/data
+volumes:
+  fertilizershop_data:
