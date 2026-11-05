@@ -17,7 +17,7 @@ pipeline {
             set +x
             docker rm -f fertilizershop 2>/dev/null || true
             docker run -d --name fertilizershop --restart unless-stopped \
-              -p 127.0.0.1:8090:8090\
+              -p 127.0.0.1:8090:8080\
               -v fertilizershop_data:/app/data \
               -e SHOP_ADMIN_USER="$SHOP_USER" \
               -e SHOP_ADMIN_PASSWORD="$SHOP_PASS" \
