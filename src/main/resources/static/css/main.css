@@ -75,3 +75,30 @@
         min-width: 48px;
     }
 }
+
+/* ===== Login page: subtle full-screen owner photo watermark ===== */
+/* The photo stays behind the login card, which remains readable. */
+.login-body {
+    position: relative;
+    isolation: isolate;
+    background-color: #edf4f5;
+}
+
+.login-body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background-image: url('../images/owner-photo.jpg');
+    background-position: center center;
+    background-repeat: no-repeat;
+    background-size: cover;
+    opacity: 0.14;
+}
+
+/* Keep the form panel opaque and above the background photograph. */
+.login-card {
+    position: relative;
+    z-index: 1;
+}
