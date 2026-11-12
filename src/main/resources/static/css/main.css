@@ -145,3 +145,40 @@
         opacity: 0.36;
     }
 }
+
+/* FINAL FIX: Visible Owner Watermark */
+
+.login-art {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+}
+
+/* Owner Photo */
+.login-art::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+
+    background-image: url('/images/owner-photo.jpg');
+    background-repeat: no-repeat;
+    background-position: center center;
+    background-size: cover;
+
+    opacity: 0.48;
+    filter: grayscale(20%);
+
+    z-index: -1;
+    pointer-events: none;
+}
+
+/* Remove old overlay hiding the image */
+.login-art::after {
+    content: none;
+}
+
+/* Keep text visible */
+.login-art > * {
+    position: relative;
+    z-index: 1;
+}
