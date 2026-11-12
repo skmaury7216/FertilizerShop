@@ -229,3 +229,96 @@
         opacity: 0.45;
     }
 }
+
+/* ==========================================
+   MAURYA KHAD BHANDAR
+   FINAL BALANCED OWNER PHOTO WATERMARK
+   ========================================== */
+
+/* Left green login panel */
+.login-art {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    background: linear-gradient(
+        145deg,
+        #145c48,
+        #209773
+    );
+    color: #ffffff;
+}
+
+/* Owner photo with balanced green overlay */
+.login-art::before {
+    content: "" !important;
+    position: absolute !important;
+    inset: 0 !important;
+
+    background-image:
+        linear-gradient(
+            145deg,
+            rgba(10, 70, 54, 0.48),
+            rgba(16, 115, 88, 0.54)
+        ),
+        url('/images/owner-photo.jpg') !important;
+
+    background-size: cover !important;
+    background-position: center center !important;
+    background-repeat: no-repeat !important;
+
+    opacity: 1 !important;
+    filter: none !important;
+
+    z-index: 0 !important;
+    pointer-events: none;
+}
+
+/* Disable previous additional overlay */
+.login-art::after {
+    content: none !important;
+    display: none !important;
+}
+
+/* Keep logo, title and text above watermark */
+.login-art > * {
+    position: relative !important;
+    z-index: 1 !important;
+}
+
+/* Improve shop name readability */
+.login-art h1 {
+    color: #ffffff;
+    font-weight: 800;
+    text-shadow: 0 2px 6px rgba(0,0,0,0.55);
+}
+
+/* Improve description readability */
+.login-art p {
+    color: #ffffff;
+    line-height: 1.9;
+    text-shadow: 0 1px 5px rgba(0,0,0,0.65);
+}
+
+/* Keep badges readable */
+.login-tags span {
+    color: #ffffff;
+    background: rgba(0, 60, 45, 0.38);
+    border: 1px solid rgba(255,255,255,0.55);
+}
+
+/* Softer photo outside the login card */
+.login-body::before {
+    opacity: 0.07 !important;
+}
+
+/* Mobile responsive watermark */
+@media (max-width: 650px) {
+    .login-art::before {
+        background-position: center center !important;
+        background-size: cover !important;
+    }
+
+    .login-art h1 {
+        font-size: 29px;
+    }
+}
