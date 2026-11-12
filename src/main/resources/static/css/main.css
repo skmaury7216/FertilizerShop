@@ -182,3 +182,50 @@
     position: relative;
     z-index: 1;
 }
+
+/* ========================================
+   MAURYA KHAD BHANDAR
+   LOGIN OWNER PHOTO WATERMARK
+   ======================================== */
+
+.login-art {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+}
+
+/* Owner Photo on Green Login Panel */
+.login-art::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+
+    background-image: url('/images/owner-photo.jpg');
+    background-repeat: no-repeat;
+    background-position: center center;
+    background-size: cover;
+
+    opacity: 0.55;
+    pointer-events: none;
+}
+
+/* Remove previous overlay */
+.login-art::after {
+    content: none;
+}
+
+/* Keep shop name and content visible */
+.login-art > * {
+    position: relative;
+    z-index: 1;
+}
+
+/* Mobile Support */
+@media (max-width: 650px) {
+    .login-art::before {
+        background-position: center;
+        background-size: cover;
+        opacity: 0.45;
+    }
+}
