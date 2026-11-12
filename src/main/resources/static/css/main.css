@@ -102,3 +102,46 @@
     position: relative;
     z-index: 1;
 }
+
+/* ===== Visible owner-photo watermark inside the LEFT GREEN LOGIN PANEL ===== */
+/* This overrides the earlier .login-art rule without changing any HTML. */
+.login-art {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+}
+
+.login-art::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background-image: url('../images/owner-photo.jpg');
+    background-repeat: no-repeat;
+    background-position: center center;
+    background-size: cover;
+    opacity: 0.40;
+    pointer-events: none;
+}
+
+/* A light green tint preserves readability without hiding the portrait. */
+.login-art::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: linear-gradient(145deg, rgba(20, 92, 72, .20), rgba(32, 151, 115, .16));
+    pointer-events: none;
+}
+
+.login-art > * {
+    position: relative;
+    z-index: 2;
+}
+
+@media (max-width: 650px) {
+    .login-art::before {
+        background-position: center 40%;
+        opacity: 0.36;
+    }
+}
