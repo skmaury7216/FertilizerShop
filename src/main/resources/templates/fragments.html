@@ -1,14 +1,14 @@
 <!doctype html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <body>
 
 <div th:fragment="sidebar" class="sidebar">
     <div class="logo">
         <img th:src="@{/images/owner-photo.jpg}"
              src="/images/owner-photo.jpg"
-             alt="मौर्या खाद भंडार के मालिक की तस्वीर"
+             alt="Shop owner photo"
              class="owner-photo-sidebar">
-        <span>मौर्या खाद भंडार <small>FERTILIZER SHOP</small></span>
+        <span>Maurya Fertilizer Shop <small>FERTILIZER SHOP</small></span>
     </div>
 
     <div class="sidebar-label">MAIN MENU</div>
@@ -18,9 +18,9 @@
     <a th:classappend="${active == 'purchases'} ? ' active' : ''" th:href="@{/purchases}">⊞ <span>Stock Purchase</span></a>
 
     <div class="sidebar-label">MANAGEMENT</div>
-    <a th:classappend="${active == 'customers'} ? ' active' : ''" th:href="@{/customers}">♙ <span>Customers / किसान</span></a>
+    <a th:classappend="${active == 'customers'} ? ' active' : ''" th:href="@{/customers}">♙ <span>Customers</span></a>
     <a th:classappend="${active == 'suppliers'} ? ' active' : ''" th:href="@{/suppliers}">▥ <span>Suppliers</span></a>
-    <a th:classappend="${active == 'payments'} ? ' active' : ''" th:href="@{/payments}">₹ <span>Payments / उधारी</span></a>
+    <a th:classappend="${active == 'payments'} ? ' active' : ''" th:href="@{/payments}">₹ <span>Payments & Dues</span></a>
     <a th:classappend="${active == 'reports'} ? ' active' : ''" th:href="@{/reports}">◫ <span>Reports</span></a>
 
     <div class="sidebar-bottom">
@@ -33,7 +33,7 @@
 
 <div th:fragment="topbar" class="topbar">
     <div>
-        <span class="eyebrow">मौर्या खाद भंडार / WORKSPACE</span>
+        <span class="eyebrow">Maurya Fertilizer Shop / WORKSPACE</span>
         <h1 th:text="${pageTitle}">Dashboard</h1>
     </div>
     <div class="topbar-right">

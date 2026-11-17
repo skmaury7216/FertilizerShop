@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="hi" xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>Sales &amp; Bills • मौर्या खाद भंडार</title>
+    <title>Sales &amp; Bills • Maurya Fertilizer Shop</title>
     <link rel="stylesheet" th:href="@{/css/main.css}">
 </head>
 <body>
@@ -14,17 +14,17 @@
         <div th:replace="~{fragments :: flash}"></div>
 
         <div class="panel">
-            <h3>नया ग्राहक और नया बिल / बिक्री</h3>
-            <p class="muted">नए ग्राहक का विवरण भरें, उत्पाद चुनें और बिल बनाएँ। बिक्री होने पर स्टॉक घटेगा। उधारी के लिए Paid Now कम रखें।</p>
+            <h3>New Customer & Sales Invoice</h3>
+            <p class="muted">Enter new customer details, select a product, and generate an invoice. Stock is reduced after a sale. For credit sales, enter an amount lower than the total in Paid Now.</p>
             <form th:action="@{/sales}" method="post" class="form-grid">
-                <label>नए ग्राहक का नाम *
-                    <input type="text" name="customerName" maxlength="120" placeholder="ग्राहक का पूरा नाम" required>
+                <label>New Customer Name *
+                    <input type="text" name="customerName" maxlength="120" placeholder="Full customer name" required>
                 </label>
-                <label>मोबाइल नंबर
-                    <input type="tel" name="customerPhone" maxlength="20" placeholder="मोबाइल नंबर (वैकल्पिक)" inputmode="tel">
+                <label>Mobile number
+                    <input type="tel" name="customerPhone" maxlength="20" placeholder="Mobile number (optional)" inputmode="tel">
                 </label>
-                <label>गाँव / पता
-                    <input type="text" name="customerVillage" maxlength="200" placeholder="गाँव या पता (वैकल्पिक)">
+                <label>Village / Address
+                    <input type="text" name="customerVillage" maxlength="200" placeholder="Village or address (optional)">
                 </label>
                 <label>Product *
                     <select name="productId" id="sale-product" required>

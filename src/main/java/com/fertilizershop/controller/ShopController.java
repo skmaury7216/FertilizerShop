@@ -34,7 +34,7 @@ public class ShopController {
     private void common(Model model, String active, String title) {
         model.addAttribute("active", active);
         model.addAttribute("pageTitle", title);
-        model.addAttribute("shopName", "मौर्या खाद भंडार");
+        model.addAttribute("shopName", "Maurya Fertilizer Shop");
     }
 
     @GetMapping("/")
@@ -58,21 +58,21 @@ public class ShopController {
 
     @GetMapping("/products")
     String productList(Model m) {
-        common(m, "products", "खाद और उत्पाद");
+        common(m, "products", "Products & Fertilizers");
         m.addAttribute("products", products.findByActiveTrueOrderByNameAsc());
         return "products";
     }
 
     @GetMapping("/products/new")
     String productNew(Model m) {
-        common(m, "products", "नया उत्पाद");
+        common(m, "products", "New Product");
         m.addAttribute("product", new Product());
         return "product-form";
     }
 
     @GetMapping("/products/{id}/edit")
     String productEdit(@PathVariable Long id, Model m) {
-        common(m, "products", "उत्पाद बदलें");
+        common(m, "products", "Edit Product");
         m.addAttribute("product", products.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Product not found")));
         return "product-form";
@@ -95,7 +95,7 @@ public class ShopController {
 
     @GetMapping("/customers")
     String customers(Model m) {
-        common(m, "customers", "ग्राहक / किसान");
+        common(m, "customers", "Customers");
         m.addAttribute("customers", customers.findAllByOrderByNameAsc());
         return "customers";
     }
@@ -111,7 +111,7 @@ public class ShopController {
 
     @GetMapping("/customers/{id}")
     String customerDetail(@PathVariable Long id, Model m) {
-        common(m, "customers", "ग्राहक विवरण");
+        common(m, "customers", "Customer Details");
         m.addAttribute("customer", customers.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Customer not found")));
         m.addAttribute("sales", sales.findByCustomerIdOrderByCreatedAtDesc(id));
@@ -178,7 +178,7 @@ public class ShopController {
             Sale sale = service.sellToNewCustomer(customerName, customerPhone,
                     customerVillage, productId, quantity, unitPrice, advance,
                     method, reference);
-            a.addFlashAttribute("message", "नए ग्राहक का बिल सफलतापूर्वक बन गया");
+            a.addFlashAttribute("message", "Invoice created successfully for the new customer");
             return "redirect:/sales/" + sale.id;
         } catch (IllegalArgumentException | ArithmeticException e) {
             a.addFlashAttribute("error", e.getMessage());
@@ -188,7 +188,7 @@ public class ShopController {
 
     @GetMapping("/sales/{id}")
     String invoice(@PathVariable Long id, Model m) {
-        common(m, "sales", "बिल / Receipt");
+        common(m, "sales", "Invoice / Receipt");
         Sale sale = sales.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Bill not found"));
         m.addAttribute("sale", sale);
@@ -207,7 +207,7 @@ public class ShopController {
 
     @GetMapping("/payments")
     String payments(Model m) {
-        common(m, "payments", "उधारी और भुगतान");
+        common(m, "payments", "Payments & Dues");
         m.addAttribute("sales", sales.findAllByOrderByCreatedAtDesc());
         m.addAttribute("payments", payments.findAllByOrderByPaidAtDesc());
         m.addAttribute("totalDue", service.totalDue());
@@ -229,7 +229,7 @@ public class ShopController {
     private String go(RedirectAttributes attrs, String path, Runnable action) {
         try {
             action.run();
-            attrs.addFlashAttribute("message", "सफलतापूर्वक सेव हो गया");
+            attrs.addFlashAttribute("message", "Saved successfully");
         } catch (IllegalArgumentException | ArithmeticException e) {
             attrs.addFlashAttribute("error", e.getMessage());
         }

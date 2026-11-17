@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="hi" xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login • मौर्या खाद भंडार</title>
+    <title>Login • Maurya Fertilizer Shop</title>
     <link rel="stylesheet" th:href="@{/css/main.css}">
 </head>
 <body class="login-body">
@@ -13,8 +13,8 @@
     <div class="login-art">
         <div class="login-art-content">
             <div class="plant">🌾</div>
-            <h1>मौर्या खाद भंडार</h1>
-            <p>आपकी खाद दुकान का स्टॉक, बिक्री, उधारी और ग्राहकों का हिसाब — एक ही जगह।</p>
+            <h1>Maurya Fertilizer Shop</h1>
+            <p>Manage your fertilizer inventory, sales, customer accounts, and payments in one place.</p>
 
             <div class="login-tags">
                 <span>Inventory</span>
@@ -27,7 +27,7 @@
     <div class="login-form">
         <div class="eyebrow">SHOP MANAGER</div>
         <h2>Welcome Back!</h2>
-        <p>अपने shop admin account से login करें।</p>
+        <p>Sign in with your shop administrator account.</p>
 
         <div th:if="${message}" class="alert success" th:text="${message}"></div>
         <div th:if="${error}" class="alert error" th:text="${error}"></div>
@@ -46,7 +46,7 @@
             <button class="button" type="submit">Sign In →</button>
         </form>
 
-        <small>Admin credentials environment variables से सेट होते हैं।</small>
+        <small>Administrator credentials are configured through environment variables.</small>
     </div>
 
 </div>

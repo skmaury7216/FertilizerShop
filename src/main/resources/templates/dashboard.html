@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="hi" xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>Dashboard • मौर्या खाद भंडार</title>
+    <title>Dashboard • Maurya Fertilizer Shop</title>
     <link rel="stylesheet" th:href="@{/css/main.css}">
     <style>
         /* Dashboard owner portrait; scoped to avoid impacting other pages. */
@@ -49,14 +49,14 @@
         <section class="welcome">
             <div>
                 <div class="eyebrow pale">WELCOME TO YOUR STORE</div>
-                <h2>नमस्ते! मौर्य खाद भंडार 🌿</h2>
-                <p>आज की बिक्री, स्टॉक और ग्राहकों की उधारी एक ही जगह देखें।</p>
-                <a class="button white" th:href="@{/sales}">+ नई बिक्री बनाएँ ↗</a>
+                <h2>Welcome to Maurya Fertilizer Shop 🌿</h2>
+                <p>Manage sales, inventory, and customer balances in one place.</p>
+                <a class="button white" th:href="@{/sales}">+ Create New Sale ↗</a>
             </div>
             <div class="welcome-graphic owner-portrait">
                 <img th:src="@{/images/owner-photo.jpg}"
                      src="/images/owner-photo.jpg"
-                     alt="मौर्या खाद भंडार के मालिक की तस्वीर"
+                     alt="Shop owner photo"
                      class="owner-photo-banner">
                 <span>SHOP OWNER</span>
             </div>
@@ -64,22 +64,22 @@
 
         <section class="stats four">
             <div class="stat-card">
-                <span>कुल बिक्री</span>
+                <span>Total Sales</span>
                 <strong th:text="'₹'+${#numbers.formatDecimal(totalSales,1,2)}">₹0</strong>
                 <small>All-time sales value</small>
             </div>
             <div class="stat-card">
-                <span>जमा राशि</span>
+                <span>Total Payments</span>
                 <strong th:text="'₹'+${#numbers.formatDecimal(totalPaid,1,2)}">₹0</strong>
                 <small>Recorded payments</small>
             </div>
             <div class="stat-card">
-                <span>बाकी उधारी</span>
+                <span>Outstanding Balance</span>
                 <strong class="warn" th:text="'₹'+${#numbers.formatDecimal(totalDue,1,2)}">₹0</strong>
                 <small>Customer outstanding</small>
             </div>
             <div class="stat-card">
-                <span>स्टॉक वैल्यू</span>
+                <span>Inventory Value</span>
                 <strong th:text="'₹'+${#numbers.formatDecimal(inventoryValue,1,2)}">₹0</strong>
                 <small>Purchase-cost estimate</small>
             </div>
@@ -88,7 +88,7 @@
         <div class="two-col">
             <section class="panel">
                 <div class="panel-head">
-                    <h3>उत्पाद और स्टॉक</h3>
+                    <h3>Products & Inventory</h3>
                     <a th:href="@{/products}">View all →</a>
                 </div>
                 <div class="products-grid">
@@ -101,28 +101,28 @@
                               th:text="${p.stock}+' in stock'"></span>
                         <span class="tile-price" th:text="'₹'+${p.sellingPrice}"></span>
                     </div>
-                    <div class="empty" th:if="${#lists.isEmpty(products)}">पहले कोई खाद या उत्पाद जोड़ें।</div>
+                    <div class="empty" th:if="${#lists.isEmpty(products)}">Add your first product to get started.</div>
                 </div>
             </section>
 
             <section class="panel">
                 <div class="panel-head"><h3>Quick Actions</h3></div>
                 <div class="actions">
-                    <a th:href="@{/products/new}">➕ नया उत्पाद <span>→</span></a>
-                    <a th:href="@{/purchases}">📦 Stock खरीदें <span>→</span></a>
-                    <a th:href="@{/sales}">🧾 नया बिल <span>→</span></a>
-                    <a th:href="@{/customers}">👨‍🌾 नया ग्राहक <span>→</span></a>
-                    <a th:href="@{/payments}">💰 उधारी देखें <span>→</span></a>
+                    <a th:href="@{/products/new}">➕ Add New Product <span>→</span></a>
+                    <a th:href="@{/purchases}">📦 Purchase Stock <span>→</span></a>
+                    <a th:href="@{/sales}">🧾 Create New Bill <span>→</span></a>
+                    <a th:href="@{/customers}">👨‍🌾 Add New Customer <span>→</span></a>
+                    <a th:href="@{/payments}">💰 View Outstanding Payments <span>→</span></a>
                 </div>
                 <div class="tip">💡 <b>Stock Alert</b><br>
-                    <span>जिन उत्पादों का स्टॉक कम हो, उन्हें Products में लाल badge के साथ देखें।</span>
+                    <span>Low-stock products are highlighted with a red badge in Products.</span>
                 </div>
             </section>
         </div>
 
         <section class="panel">
             <div class="panel-head">
-                <h3>हाल की बिक्री</h3>
+                <h3>Recent Sales</h3>
                 <a th:href="@{/sales}">All sales →</a>
             </div>
             <div class="table-scroll">
@@ -147,7 +147,7 @@
                             <td><span class="pill" th:text="${s.paymentStatus}"></span></td>
                         </tr>
                         <tr th:if="${#lists.isEmpty(sales)}">
-                            <td colspan="6" class="empty">अभी कोई sale नहीं है।</td>
+                            <td colspan="6" class="empty">No sales yet.</td>
                         </tr>
                     </tbody>
                 </table>

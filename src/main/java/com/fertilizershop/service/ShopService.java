@@ -28,18 +28,18 @@ public class ShopService {
     }
 
     public BigDecimal money(BigDecimal n) {
-        if (n == null) throw new IllegalArgumentException("राशि भरें");
+        if (n == null) throw new IllegalArgumentException("Enter an amount");
         return n.setScale(2, RoundingMode.HALF_UP);
     }
 
     private void nonnegative(BigDecimal n, String field) {
-        if (n.signum() < 0) throw new IllegalArgumentException(field + " negative नहीं हो सकता");
+        if (n.signum() < 0) throw new IllegalArgumentException(field + " cannot be negative");
     }
     private void positive(BigDecimal n, String field) {
-        if (n.signum() <= 0) throw new IllegalArgumentException(field + " zero से अधिक होना चाहिए");
+        if (n.signum() <= 0) throw new IllegalArgumentException(field + " must be greater than zero");
     }
     private void qty(Integer n) {
-        if (n == null || n <= 0) throw new IllegalArgumentException("Quantity zero से अधिक होनी चाहिए");
+        if (n == null || n <= 0) throw new IllegalArgumentException("Quantity must be greater than zero");
     }
 
     @Transactional
@@ -124,7 +124,7 @@ public class ShopService {
         nonnegative(paid, "Advance");
         BigDecimal total = price.multiply(BigDecimal.valueOf(quantity));
         if (paid.compareTo(total) > 0)
-            throw new IllegalArgumentException("Paid amount total से अधिक है");
+            throw new IllegalArgumentException("Paid amount exceeds the bill total");
         p.stock -= quantity;
         products.save(p);
         Sale sale = new Sale();
@@ -151,13 +151,13 @@ public class ShopService {
                                   BigDecimal unitPrice, BigDecimal advance,
                                   String method, String reference) {
         if (customerName == null || customerName.isBlank())
-            throw new IllegalArgumentException("नए ग्राहक का नाम भरें");
+            throw new IllegalArgumentException("Enter the new customer name");
         if (customerName.trim().length() > 120)
-            throw new IllegalArgumentException("ग्राहक का नाम बहुत लंबा है");
+            throw new IllegalArgumentException("Customer name is too long");
         if (customerPhone != null && customerPhone.length() > 20)
-            throw new IllegalArgumentException("मोबाइल नंबर बहुत लंबा है");
+            throw new IllegalArgumentException("Mobile number is too long");
         if (customerVillage != null && customerVillage.length() > 200)
-            throw new IllegalArgumentException("गाँव / पता बहुत लंबा है");
+            throw new IllegalArgumentException("Village or address is too long");
         qty(quantity);
         // Validate sale data before creating a new customer.
         Product p = products.findById(productId)
@@ -170,7 +170,7 @@ public class ShopService {
         positive(price, "Selling price");
         nonnegative(paid, "Advance");
         if (paid.compareTo(price.multiply(BigDecimal.valueOf(quantity))) > 0)
-            throw new IllegalArgumentException("Paid amount total से अधिक है");
+            throw new IllegalArgumentException("Paid amount exceeds the bill total");
         if (paid.signum() > 0 && !("Cash".equals(method)
                 || "UPI (verified offline)".equals(method)
                 || "Bank Transfer (verified offline)".equals(method)))
@@ -187,7 +187,7 @@ public class ShopService {
         BigDecimal a = money(amount);
         positive(a, "Payment amount");
         if (a.compareTo(s.getDue()) > 0)
-            throw new IllegalArgumentException("Payment बाकी राशि से अधिक है");
+            throw new IllegalArgumentException("Payment exceeds outstanding balance");
         s.paid = s.paid.add(a);
         sales.save(s);
         return savePayment(s, a, method, reference);
