@@ -5,6 +5,7 @@ import java.math.BigDecimal;
 public class Product {
  @Id @GeneratedValue(strategy=GenerationType.IDENTITY) public Long id;
  @Column(nullable=false) public String name;
+ @Column(length=80,unique=true) public String barcode;
  public String brand;
  public String category;
  public String unit="Bag";

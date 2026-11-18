@@ -84,13 +84,14 @@ public class ShopController {
                        @RequestParam(required = false) String brand,
                        @RequestParam(required = false) String category,
                        @RequestParam(defaultValue = "Bag") String unit,
+                       @RequestParam(required = false) String barcode,
                        @RequestParam BigDecimal purchasePrice,
                        @RequestParam BigDecimal sellingPrice,
                        @RequestParam(defaultValue = "10") Integer reorderLevel,
                        @RequestParam(required = false) String description,
                        RedirectAttributes a) {
         return go(a, "/products", () -> service.saveProduct(id, name, brand, category,
-                unit, purchasePrice, sellingPrice, reorderLevel, description));
+                unit, barcode, purchasePrice, sellingPrice, reorderLevel, description));
     }
 
     @GetMapping("/customers")

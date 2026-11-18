@@ -44,11 +44,21 @@ public class ShopService {
 
     @Transactional
     public Product saveProduct(Long id, String name, String brand, String category,
-                               String unit, BigDecimal buy, BigDecimal sell,
+                               String unit, String barcode, BigDecimal buy, BigDecimal sell,
                                Integer reorder, String desc) {
         if (name == null || name.isBlank()) throw new IllegalArgumentException("Product name required");
         Product p = id == null ? new Product() : products.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Product not found"));
+        String cleanBarcode = barcode == null ? null : barcode.trim();
+        if (cleanBarcode != null && cleanBarcode.isEmpty()) cleanBarcode = null;
+        if (cleanBarcode != null) {
+            if (cleanBarcode.length() > 80 || !cleanBarcode.matches("[A-Za-z0-9._-]+"))
+                throw new IllegalArgumentException("Barcode must contain only letters, digits, dots, underscores or hyphens (max 80)");
+            var duplicate = products.findByBarcode(cleanBarcode);
+            if (duplicate.isPresent() && !duplicate.get().id.equals(p.id))
+                throw new IllegalArgumentException("Barcode already assigned to another product");
+        }
+        p.barcode = cleanBarcode;
         p.name = name.trim();
         p.brand = brand;
         p.category = category;

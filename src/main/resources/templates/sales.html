@@ -26,10 +26,14 @@
                 <label>Village / Address
                     <input type="text" name="customerVillage" maxlength="200" placeholder="Village or address (optional)">
                 </label>
+                <label>Scan Product Barcode
+                    <input type="text" id="sale-barcode-scan" placeholder="Scan with USB/Bluetooth scanner, then Enter" autocomplete="off" spellcheck="false">
+                    <small id="sale-barcode-status" aria-live="polite">Scan a barcode already saved in Products.</small>
+                </label>
                 <label>Product *
                     <select name="productId" id="sale-product" required>
                         <option value="">Select product</option>
-                        <option th:each="p : ${products}" th:value="${p.id}" th:attr="data-price=${p.sellingPrice}" th:text="${p.name}+' · Stock '+${p.stock}"></option>
+                        <option th:each="p : ${products}" th:value="${p.id}" th:attr="data-price=${p.sellingPrice},data-barcode=${p.barcode}" th:text="${p.name}+' · Stock '+${p.stock}"></option>
                     </select>
                 </label>
                 <label>Quantity *

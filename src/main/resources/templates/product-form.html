@@ -3,6 +3,7 @@
 <form th:action="@{/products}" method="post"><input type="hidden" name="id" th:if="${product.id != null}" th:value="${product.id}"><div class="form-grid">
 <label>Product Name *<input required maxlength="150" name="name" th:value="${product.name}" placeholder="e.g., Urea 45 KG"></label>
 <label>Brand<input name="brand" th:value="${product.brand}" placeholder="IFFCO"></label>
+<label>Barcode / SKU<input type="text" name="barcode" maxlength="80" th:value="${product.barcode}" placeholder="Scan or enter barcode" autocomplete="off" spellcheck="false"></label>
 <label>Category<select name="category"><option th:selected="${product.category == 'Fertilizer'}">Fertilizer</option><option th:selected="${product.category == 'Seeds'}">Seeds</option><option th:selected="${product.category == 'Micronutrient'}">Micronutrient</option><option th:selected="${product.category == 'Other'}">Other</option></select></label>
 <label>Unit<select name="unit"><option th:selected="${product.unit == 'Bag'}">Bag</option><option th:selected="${product.unit == 'Kg'}">Kg</option><option th:selected="${product.unit == 'Packet'}">Packet</option><option th:selected="${product.unit == 'Bottle'}">Bottle</option></select></label>
 <label>Purchase Price (₹) *<input type="number" min="0" step="0.01" required name="purchasePrice" th:value="${product.purchasePrice}"></label>
