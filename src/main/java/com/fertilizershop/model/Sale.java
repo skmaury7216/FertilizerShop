@@ -13,6 +13,7 @@ public class Sale {
  @Column(precision=12,scale=2) public BigDecimal paid=BigDecimal.ZERO;
  public LocalDateTime createdAt;
  public String notes;
+ @Column(length=36) public String billGroup; // null for legacy single-item invoices
  public BigDecimal getDue(){return total.subtract(paid);}
  public String getPaymentStatus(){return getDue().signum()==0?"Paid":(paid.signum()==0?"Unpaid":"Partial");}
 }

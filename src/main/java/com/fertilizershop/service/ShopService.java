@@ -7,6 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
+import java.util.*;
 
 @Service
 public class ShopService {
@@ -188,6 +189,152 @@ public class ShopService {
         // Phone/village can be blank. Keeping one record per new invoice is intentional.
         Customer c = saveCustomer(customerName, customerPhone, customerVillage, "");
         return sell(productId, c.id, quantity, price, paid, method, reference);
+    }
+
+
+    /** Save a complete multi-product bill in one database transaction.
+     *  Every product must be distinct. Existing old single-product sales are unaffected.
+     */
+    @Transactional
+    public Sale sellMultiToNewCustomer(String name, String phone, String village,
+                                       List<Long> productIds, List<Integer> quantities,
+                                       List<BigDecimal> unitPrices, BigDecimal advance,
+                                       String method, String reference) {
+        if (name == null || name.isBlank() || name.trim().length() > 120)
+            throw new IllegalArgumentException("Enter a valid customer name (up to 120 characters)");
+        if (phone != null && phone.length() > 20)
+            throw new IllegalArgumentException("Mobile number is too long");
+        if (village != null && village.length() > 200)
+            throw new IllegalArgumentException("Village or address is too long");
+        if (productIds == null || quantities == null || unitPrices == null || productIds.isEmpty()
+                || productIds.size() != quantities.size() || productIds.size() != unitPrices.size()
+                || productIds.size() > 50)
+            throw new IllegalArgumentException("Enter 1 to 50 complete product rows");
+        if (new HashSet<>(productIds).size() != productIds.size())
+            throw new IllegalArgumentException("Each product can appear only once; increase its quantity instead");
+
+        List<Product> selected = new ArrayList<>();
+        List<BigDecimal> prices = new ArrayList<>();
+        BigDecimal grandTotal = BigDecimal.ZERO;
+        for (int i = 0; i < productIds.size(); i++) {
+            qty(quantities.get(i));
+            Product product = products.findById(productIds.get(i))
+                    .orElseThrow(() -> new IllegalArgumentException("Product not found"));
+            if (!product.active || product.stock < quantities.get(i))
+                throw new IllegalArgumentException("Insufficient stock for " + product.name);
+            BigDecimal price = money(unitPrices.get(i));
+            positive(price, "Selling price");
+            selected.add(product);
+            prices.add(price);
+            grandTotal = grandTotal.add(price.multiply(BigDecimal.valueOf(quantities.get(i))));
+        }
+        BigDecimal remainingPayment = money(advance);
+        nonnegative(remainingPayment, "Paid amount");
+        if (remainingPayment.compareTo(grandTotal) > 0)
+            throw new IllegalArgumentException("Paid amount exceeds the invoice total");
+        if (remainingPayment.signum() > 0) validatePaymentMethod(method);
+
+        Customer customer = saveCustomer(name, phone, village, "");
+        String groupId = UUID.randomUUID().toString();
+        Sale first = null;
+        LocalDateTime now = LocalDateTime.now();
+        for (int i = 0; i < selected.size(); i++) {
+            Product p = selected.get(i);
+            int amount = quantities.get(i);
+            BigDecimal lineTotal = prices.get(i).multiply(BigDecimal.valueOf(amount));
+            BigDecimal linePaid = remainingPayment.min(lineTotal);
+            remainingPayment = remainingPayment.subtract(linePaid);
+            p.stock -= amount;
+            products.save(p);
+            Sale row = new Sale();
+            row.product = p;
+            row.customer = customer;
+            row.quantity = amount;
+            row.unitPrice = prices.get(i);
+            row.total = lineTotal;
+            row.paid = linePaid;
+            row.createdAt = now;
+            row.billGroup = groupId;
+            row = sales.save(row);
+            if (linePaid.signum() > 0) savePayment(row, linePaid, method, reference);
+            if (first == null) first = row;
+        }
+        return first;
+    }
+
+    public List<Sale> invoiceItems(Sale anchor) {
+        return anchor.billGroup == null ? List.of(anchor)
+                : sales.findByBillGroupOrderByIdAsc(anchor.billGroup);
+    }
+
+    /** Apply later payments across unpaid invoice rows without exceeding each row's due. */
+    @Transactional
+    public void payInvoice(Long anchorId, BigDecimal amount, String method, String reference) {
+        Sale anchor = sales.findById(anchorId).orElseThrow(() -> new IllegalArgumentException("Bill not found"));
+        List<Sale> lines = invoiceItems(anchor);
+        BigDecimal value = money(amount);
+        positive(value, "Payment amount");
+        BigDecimal available = lines.stream().map(Sale::getDue).reduce(BigDecimal.ZERO, BigDecimal::add);
+        if (value.compareTo(available) > 0)
+            throw new IllegalArgumentException("Payment exceeds outstanding invoice balance");
+        validatePaymentMethod(method);
+        for (Sale row : lines) {
+            BigDecimal applied = value.min(row.getDue());
+            if (applied.signum() > 0) {
+                row.paid = row.paid.add(applied);
+                sales.save(row);
+                savePayment(row, applied, method, reference);
+                value = value.subtract(applied);
+            }
+        }
+    }
+
+    private void validatePaymentMethod(String method) {
+        if (!("Cash".equals(method) || "UPI (verified offline)".equals(method)
+                || "Bank Transfer (verified offline)".equals(method)))
+            throw new IllegalArgumentException("Invalid payment method");
+    }
+
+    public static class InvoiceSummary {
+        private final Long id;
+        private final LocalDateTime createdAt;
+        private final String customerName, products, status;
+        private final int quantity;
+        private final BigDecimal total, paid, due;
+        InvoiceSummary(List<Sale> lines) {
+            Sale first = lines.get(0);
+            this.id=first.id; this.createdAt=first.createdAt;
+            this.customerName=first.customer.name;
+            this.products=lines.size()==1?first.product.name:lines.size()+" products";
+            this.quantity=lines.stream().mapToInt(x->x.quantity).sum();
+            this.total=lines.stream().map(x->x.total).reduce(BigDecimal.ZERO,BigDecimal::add);
+            this.paid=lines.stream().map(x->x.paid).reduce(BigDecimal.ZERO,BigDecimal::add);
+            this.due=total.subtract(paid);
+            this.status=due.signum()==0?"Paid":(paid.signum()==0?"Unpaid":"Partial");
+        }
+        public Long getId(){return id;}
+        public LocalDateTime getCreatedAt(){return createdAt;}
+        public String getCustomerName(){return customerName;}
+        public String getProducts(){return products;}
+        public String getStatus(){return status;}
+        public int getQuantity(){return quantity;}
+        public BigDecimal getTotal(){return total;}
+        public BigDecimal getPaid(){return paid;}
+        public BigDecimal getDue(){return due;}
+    }
+
+    public List<InvoiceSummary> invoiceSummaries() {
+        Map<String,List<Sale>> groups=new LinkedHashMap<>();
+        for(Sale row:sales.findAllByOrderByCreatedAtDesc()){
+            String key=row.billGroup == null?"legacy-"+row.id:row.billGroup;
+            groups.computeIfAbsent(key,k->new ArrayList<>()).add(row);
+        }
+        List<InvoiceSummary> result=new ArrayList<>();
+        for(List<Sale> lines:groups.values()){
+            lines.sort(Comparator.comparing(x->x.id));
+            result.add(new InvoiceSummary(lines));
+        }
+        return result;
     }
 
     @Transactional

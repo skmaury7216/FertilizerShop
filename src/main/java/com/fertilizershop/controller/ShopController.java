@@ -8,6 +8,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.math.BigDecimal;
+import java.util.*;
 
 @Controller
 public class ShopController {
@@ -157,7 +158,7 @@ public class ShopController {
     @GetMapping("/sales")
     String sales(Model m) {
         common(m, "sales", "Sales & Bills");
-        m.addAttribute("sales", sales.findAllByOrderByCreatedAtDesc());
+        m.addAttribute("invoiceRows", service.invoiceSummaries());
         // New-bill form does not display previously registered customers.
         m.addAttribute("products", products.findByActiveTrueOrderByNameAsc());
         return "sales";
@@ -168,16 +169,16 @@ public class ShopController {
     String createSale(@RequestParam String customerName,
                       @RequestParam(required = false) String customerPhone,
                       @RequestParam(required = false) String customerVillage,
-                      @RequestParam Long productId,
-                      @RequestParam Integer quantity,
-                      @RequestParam BigDecimal unitPrice,
+                      @RequestParam("productIds") List<Long> productIds,
+                      @RequestParam("quantities") List<Integer> quantities,
+                      @RequestParam("unitPrices") List<BigDecimal> unitPrices,
                       @RequestParam(defaultValue = "0") BigDecimal advance,
                       @RequestParam(defaultValue = "Cash") String method,
                       @RequestParam(required = false) String reference,
                       RedirectAttributes a) {
         try {
-            Sale sale = service.sellToNewCustomer(customerName, customerPhone,
-                    customerVillage, productId, quantity, unitPrice, advance,
+            Sale sale = service.sellMultiToNewCustomer(customerName, customerPhone,
+                    customerVillage, productIds, quantities, unitPrices, advance,
                     method, reference);
             a.addFlashAttribute("message", "Invoice created successfully for the new customer");
             return "redirect:/sales/" + sale.id;
@@ -192,8 +193,20 @@ public class ShopController {
         common(m, "sales", "Invoice / Receipt");
         Sale sale = sales.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Bill not found"));
-        m.addAttribute("sale", sale);
-        m.addAttribute("payments", payments.findBySaleIdOrderByPaidAtDesc(id));
+        List<Sale> items = service.invoiceItems(sale);
+        m.addAttribute("sale", items.get(0));
+        m.addAttribute("invoiceItems", items);
+        BigDecimal invoiceTotal = items.stream().map(x -> x.total).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal invoicePaid = items.stream().map(x -> x.paid).reduce(BigDecimal.ZERO, BigDecimal::add);
+        m.addAttribute("invoiceTotal", invoiceTotal);
+        m.addAttribute("invoicePaid", invoicePaid);
+        m.addAttribute("invoiceDue", invoiceTotal.subtract(invoicePaid));
+        m.addAttribute("invoiceStatus", invoiceTotal.compareTo(invoicePaid) == 0 ? "Paid"
+                : invoicePaid.signum() == 0 ? "Unpaid" : "Partial");
+        List<Payment> history = new ArrayList<>();
+        for (Sale line : items) history.addAll(payments.findBySaleIdOrderByPaidAtDesc(line.id));
+        history.sort(Comparator.comparing((Payment x) -> x.paidAt).reversed());
+        m.addAttribute("payments", history);
         return "invoice";
     }
 
@@ -203,7 +216,7 @@ public class ShopController {
                @RequestParam(defaultValue = "Cash") String method,
                @RequestParam(required = false) String reference,
                RedirectAttributes a) {
-        return go(a, "/sales/" + id, () -> service.pay(id, amount, method, reference));
+        return go(a, "/sales/" + id, () -> service.payInvoice(id, amount, method, reference));
     }
 
     @GetMapping("/payments")

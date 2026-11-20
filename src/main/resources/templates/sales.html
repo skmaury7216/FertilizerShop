@@ -15,49 +15,43 @@
 
         <div class="panel">
             <h3>New Customer & Sales Invoice</h3>
-            <p class="muted">Enter new customer details, select a product, and generate an invoice. Stock is reduced after a sale. For credit sales, enter an amount lower than the total in Paid Now.</p>
-            <form th:action="@{/sales}" method="post" class="form-grid">
-                <label>New Customer Name *
-                    <input type="text" name="customerName" maxlength="120" placeholder="Full customer name" required>
-                </label>
-                <label>Mobile number
-                    <input type="tel" name="customerPhone" maxlength="20" placeholder="Mobile number (optional)" inputmode="tel">
-                </label>
-                <label>Village / Address
-                    <input type="text" name="customerVillage" maxlength="200" placeholder="Village or address (optional)">
-                </label>
-                <label>Scan Product Barcode
-                    <input type="text" id="sale-barcode-scan" placeholder="Scan with USB/Bluetooth scanner, then Enter" autocomplete="off" spellcheck="false">
-                    <small id="sale-barcode-status" aria-live="polite">Scan a barcode already saved in Products.</small>
-                </label>
-                <label>Product *
-                    <select name="productId" id="sale-product" required>
-                        <option value="">Select product</option>
-                        <option th:each="p : ${products}" th:value="${p.id}" th:attr="data-price=${p.sellingPrice},data-barcode=${p.barcode}" th:text="${p.name}+' · Stock '+${p.stock}"></option>
-                    </select>
-                </label>
-                <label>Quantity *
-                    <input type="number" min="1" name="quantity" id="sale-quantity" value="1" required>
-                </label>
-                <label>Unit Selling Price (₹) *
-                    <input type="number" min="0.01" step="0.01" name="unitPrice" id="sale-price" required>
-                </label>
-                <label>Paid Now (₹)
-                    <input type="number" min="0" step="0.01" name="advance" value="0">
-                </label>
-                <label>Payment Method
-                    <select name="method">
-                        <option>Cash</option>
-                        <option>UPI (verified offline)</option>
-                        <option>Bank Transfer (verified offline)</option>
-                    </select>
-                </label>
-                <label>Payment Reference
-                    <input name="reference" maxlength="150" placeholder="Optional, after verification">
-                </label>
-                <div class="submit-cell">
-                    <div class="mini-total">Bill Total: <strong id="sale-total">₹0.00</strong></div>
-                    <button class="button" type="submit">Generate Bill</button>
+            <p class="muted">Enter new customer details and add multiple products to the same invoice. Stock is reduced after a sale. For credit sales, enter an amount lower than the total in Paid Now.</p>
+            <form th:action="@{/sales}" method="post" id="multi-sale-form">
+                <div class="form-grid">
+                    <label>New Customer Name *<input name="customerName" maxlength="120" required placeholder="Customer name"></label>
+                    <label>Mobile Number<input type="tel" name="customerPhone" maxlength="20" placeholder="Optional"></label>
+                    <label>Village / Address<input name="customerVillage" maxlength="200" placeholder="Optional"></label>
+                    <label>Scan Product Barcode
+                        <input id="sale-barcode-scan" placeholder="Scan with USB/Bluetooth scanner, then Enter" autocomplete="off">
+                        <small id="sale-barcode-status" aria-live="polite">Scanning adds/selects a product row; it does not submit the bill.</small>
+                    </label>
+                </div>
+                <h3 style="margin-top:25px">Products on This Bill</h3>
+                <div id="invoice-lines">
+                    <div class="invoice-line form-grid" style="align-items:end;margin-bottom:15px">
+                        <label>Product *
+                            <select name="productIds" class="invoice-product" required>
+                                <option value="">Select product</option>
+                                <option th:each="p : ${products}" th:value="${p.id}"
+                                    th:attr="data-price=${p.sellingPrice},data-stock=${p.stock},data-barcode=${p.barcode}"
+                                    th:text="${p.name}+' · Available '+${p.stock}"></option>
+                            </select>
+                        </label>
+                        <label>Quantity *<input type="number" min="1" name="quantities" class="invoice-quantity" value="1" required></label>
+                        <label>Unit Price (₹) *<input type="number" min="0.01" step="0.01" name="unitPrices" class="invoice-price" required></label>
+                        <div><span>Line Total: <strong class="invoice-line-total">₹0.00</strong></span>
+                            <button type="button" class="button light invoice-remove" style="margin-left:14px">Remove</button></div>
+                    </div>
+                </div>
+                <button type="button" id="add-invoice-product" class="button light">+ Add Another Product</button>
+                <div class="form-grid" style="margin-top:24px">
+                    <label>Paid Now (₹)<input type="number" min="0" step="0.01" name="advance" id="invoice-paid" value="0"></label>
+                    <label>Payment Method<select name="method"><option>Cash</option><option>UPI (verified offline)</option><option>Bank Transfer (verified offline)</option></select></label>
+                    <label>Payment Reference<input name="reference" maxlength="150" placeholder="Optional, after verification"></label>
+                    <div class="submit-cell"><div class="mini-total">Bill Total: <strong id="sale-total">₹0.00</strong>
+                        <div>Balance Due: <strong id="invoice-due">₹0.00</strong></div></div>
+                        <button class="button" type="submit">Generate Single Bill</button>
+                    </div>
                 </div>
             </form>
         </div>
@@ -71,18 +65,18 @@
                 <table id="salesTable">
                     <thead><tr><th>Bill No.</th><th>Date</th><th>Customer</th><th>Product</th><th>Qty</th><th>Total</th><th>Paid</th><th>Due</th><th>Status</th></tr></thead>
                     <tbody>
-                        <tr th:each="s : ${sales}">
+                        <tr th:each="s : ${invoiceRows}">
                             <td><a th:href="@{/sales/{id}(id=${s.id})}" th:text="'INV-'+${s.id}"></a></td>
                             <td th:text="${#temporals.format(s.createdAt,'dd MMM yyyy')}"></td>
-                            <td th:text="${s.customer.name}"></td>
-                            <td th:text="${s.product.name}"></td>
+                            <td th:text="${s.customerName}"></td>
+                            <td th:text="${s.products}"></td>
                             <td th:text="${s.quantity}"></td>
                             <td th:text="${s.total}"></td>
                             <td th:text="${s.paid}"></td>
                             <td class="warn" th:text="${s.due}"></td>
-                            <td><span class="pill" th:text="${s.paymentStatus}"></span></td>
+                            <td><span class="pill" th:text="${s.status}"></span></td>
                         </tr>
-                        <tr th:if="${#lists.isEmpty(sales)}"><td colspan="9" class="empty">No bills yet</td></tr>
+                        <tr th:if="${#lists.isEmpty(invoiceRows)}"><td colspan="9" class="empty">No bills yet</td></tr>
                     </tbody>
                 </table>
             </div>
