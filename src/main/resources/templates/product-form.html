@@ -1,15 +1,283 @@
-<!doctype html><html lang="en" xmlns:th="http://www.thymeleaf.org"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Product form • Maurya Fertilizer Shop</title><link rel="stylesheet" th:href="@{/css/main.css}"></head><body><div class="layout"><div th:replace="~{fragments :: sidebar}"></div><main class="main"><div th:replace="~{fragments :: topbar}"></div><div th:replace="~{fragments :: flash}"></div>
-<div class="panel form-panel"><h3 th:text="${product.id == null} ? 'Add New Product' : 'Edit Product Details'"></h3>
-<form th:action="@{/products}" method="post"><input type="hidden" name="id" th:if="${product.id != null}" th:value="${product.id}"><div class="form-grid">
-<label>Product Name *<input required maxlength="150" name="name" th:value="${product.name}" placeholder="e.g., Urea 45 KG"></label>
-<label>Brand<input name="brand" th:value="${product.brand}" placeholder="IFFCO"></label>
-<label>Barcode / SKU<input type="text" name="barcode" maxlength="80" th:value="${product.barcode}" placeholder="Scan or enter barcode" autocomplete="off" spellcheck="false"></label>
-<label>Category<select name="category"><option th:selected="${product.category == 'Fertilizer'}">Fertilizer</option><option th:selected="${product.category == 'Seeds'}">Seeds</option><option th:selected="${product.category == 'Micronutrient'}">Micronutrient</option><option th:selected="${product.category == 'Other'}">Other</option></select></label>
-<label>Unit<select name="unit"><option th:selected="${product.unit == 'Bag'}">Bag</option><option th:selected="${product.unit == 'Kg'}">Kg</option><option th:selected="${product.unit == 'Packet'}">Packet</option><option th:selected="${product.unit == 'Bottle'}">Bottle</option></select></label>
-<label>Purchase Price (₹) *<input type="number" min="0" step="0.01" required name="purchasePrice" th:value="${product.purchasePrice}"></label>
-<label>Selling Price (₹) *<input type="number" min="0" step="0.01" required name="sellingPrice" th:value="${product.sellingPrice}"></label>
-<label>Low-stock Alert Level<input type="number" min="0" name="reorderLevel" th:value="${product.reorderLevel}"></label>
-<label>Description<input name="description" th:value="${product.description}" placeholder="Optional"></label></div>
-<p class="note">Initial stock will be zero. Record purchases in the Stock Purchase section.</p>
-<div class="form-actions"><a class="button light" th:href="@{/products}">Cancel</a><button class="button" type="submit">Save Product</button></div></form></div>
-</main></div><script th:src="@{/js/main.js}"></script></body></html>
+
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Product Form • Maurya Fertilizer Shop</title>
+
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+</head>
+
+<body>
+<div class="layout">
+
+    <!-- Sidebar -->
+    <div th:replace="~{fragments :: sidebar}"></div>
+
+    <main class="main">
+
+        <!-- Topbar -->
+        <div th:replace="~{fragments :: topbar}"></div>
+
+        <!-- Flash Messages -->
+        <div th:replace="~{fragments :: flash}"></div>
+
+        <div class="panel">
+
+            <h3 th:text="${product.id == null}
+                    ? 'Add New Fertilizer'
+                    : 'Edit Fertilizer'">
+                Add New Fertilizer
+            </h3>
+
+            <p class="muted">
+                Configure fertilizer details, bag weight,
+                purchase price and selling price.
+            </p>
+
+            <form th:action="@{/products}"
+                  method="post"
+                  class="stack-form">
+
+                <!-- Product ID -->
+                <input type="hidden"
+                       name="id"
+                       th:value="${product.id}">
+
+                <div class="form-grid">
+
+                    <!-- Product Name -->
+                    <label>
+                        Fertilizer Name *
+
+                        <input type="text"
+                               name="name"
+                               th:value="${product.name}"
+                               placeholder="Example: DAP Fertilizer"
+                               required>
+                    </label>
+
+                    <!-- Brand -->
+                    <label>
+                        Brand
+
+                        <input type="text"
+                               name="brand"
+                               th:value="${product.brand}"
+                               placeholder="Brand name">
+                    </label>
+
+                    <!-- Category -->
+                    <label>
+                        Category
+
+                        <input type="text"
+                               name="category"
+                               th:value="${product.category}"
+                               placeholder="Example: Fertilizer">
+                    </label>
+
+                    <!-- Barcode -->
+                    <label>
+                        Product Barcode
+
+                        <input type="text"
+                               name="barcode"
+                               th:value="${product.barcode}"
+                               maxlength="80"
+                               placeholder="Optional barcode">
+                    </label>
+
+                    <!-- Unit -->
+                    <label>
+                        Product Unit
+
+                        <select name="unit"
+                                id="productUnit">
+                            <option value="Bag"
+                                    th:selected="${product.unit == 'Bag'}">
+                                Bag
+                            </option>
+
+                            <option value="Piece"
+                                    th:selected="${product.unit == 'Piece'}">
+                                Piece
+                            </option>
+                        </select>
+                    </label>
+
+                    <!-- New: Bag Weight -->
+                    <label>
+                        Bag Weight (kg) *
+
+                        <input type="number"
+                               name="bagWeightKg"
+                               id="bagWeightKg"
+                               th:value="${product.bagWeightKg}"
+                               min="0.001"
+                               step="0.001"
+                               placeholder="Example: 50"
+                               required>
+
+                        <small>
+                            Enter the weight of one full bag.
+                        </small>
+                    </label>
+
+                    <!-- Purchase Price -->
+                    <label>
+                        Purchase Price per Bag (₹) *
+
+                        <input type="number"
+                               name="purchasePrice"
+                               th:value="${product.purchasePrice}"
+                               min="0"
+                               step="0.01"
+                               required>
+                    </label>
+
+                    <!-- Selling Price -->
+                    <label>
+                        Selling Price per Bag (₹) *
+
+                        <input type="number"
+                               name="sellingPrice"
+                               id="sellingPrice"
+                               th:value="${product.sellingPrice}"
+                               min="0"
+                               step="0.01"
+                               required>
+                    </label>
+
+                    <!-- Reorder Level -->
+                    <label>
+                        Reorder Level (Bags)
+
+                        <input type="number"
+                               name="reorderLevel"
+                               th:value="${product.reorderLevel}"
+                               min="0"
+                               step="1">
+                    </label>
+
+                </div>
+
+                <!-- Automatic Price Preview -->
+                <div class="mini-total"
+                     style="margin-top:20px;padding:15px">
+
+                    <h3>Weight-Based Pricing</h3>
+
+                    <p>
+                        Price per Kilogram:
+                        <strong id="pricePerKg">
+                            ₹0.00
+                        </strong>
+                    </p>
+
+                    <p>
+                        Price for 500 Grams:
+                        <strong id="price500g">
+                            ₹0.00
+                        </strong>
+                    </p>
+
+                    <p>
+                        Price per Bag:
+                        <strong id="pricePerBag">
+                            ₹0.00
+                        </strong>
+                    </p>
+
+                </div>
+
+                <!-- Description -->
+                <label>
+                    Description
+
+                    <textarea name="description"
+                              rows="3"
+                              placeholder="Product description"
+                              th:text="${product.description}">
+                    </textarea>
+                </label>
+
+                <div style="display:flex;gap:12px;margin-top:20px">
+
+                    <button type="submit"
+                            class="button">
+                        Save Fertilizer
+                    </button>
+
+                    <a th:href="@{/products}"
+                       class="button light">
+                        Cancel
+                    </a>
+
+                </div>
+
+            </form>
+        </div>
+
+    </main>
+</div>
+
+<script th:src="@{/js/main.js}"></script>
+
+<!-- Automatic Pricing Preview -->
+<script>
+(function () {
+    const weightInput =
+        document.getElementById("bagWeightKg");
+
+    const priceInput =
+        document.getElementById("sellingPrice");
+
+    const perKg =
+        document.getElementById("pricePerKg");
+
+    const price500g =
+        document.getElementById("price500g");
+
+    const perBag =
+        document.getElementById("pricePerBag");
+
+    function calculate() {
+        const weight = Number(weightInput.value);
+        const price = Number(priceInput.value);
+
+        if (!Number.isFinite(weight)
+                || weight <= 0
+                || !Number.isFinite(price)
+                || price < 0) {
+
+            perKg.textContent = "₹0.00";
+            price500g.textContent = "₹0.00";
+            perBag.textContent = "₹0.00";
+            return;
+        }
+
+        const kgPrice = price / weight;
+
+        perKg.textContent =
+            "₹" + kgPrice.toFixed(2);
+
+        price500g.textContent =
+            "₹" + (kgPrice * 0.5).toFixed(2);
+
+        perBag.textContent =
+            "₹" + price.toFixed(2);
+    }
+
+    weightInput.addEventListener("input", calculate);
+    priceInput.addEventListener("input", calculate);
+
+    calculate();
+})();
+</script>
+
+</body>
+</html>

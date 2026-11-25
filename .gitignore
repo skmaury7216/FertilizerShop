@@ -9,3 +9,16 @@ data/
 *.trace.db
 .env
 *.log
+
+# Windows offline application
+/installer/
+/database-english-migration/
+/src/main/resources/application-desktop.properties
+
+# Local and sensitive files
+*.mv.db
+*.trace.db
+*.exe
+*.msi
+.env
+.env.*

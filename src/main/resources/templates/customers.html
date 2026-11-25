@@ -1,4 +1,180 @@
-<!doctype html><html lang="en" xmlns:th="http://www.thymeleaf.org"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Customers • Maurya Fertilizer Shop</title><link rel="stylesheet" th:href="@{/css/main.css}"></head><body><div class="layout"><div th:replace="~{fragments :: sidebar}"></div><main class="main"><div th:replace="~{fragments :: topbar}"></div><div th:replace="~{fragments :: flash}"></div>
-<div class="two-col tight"><section class="panel"><h3>Add New Customer</h3><form th:action="@{/customers}" method="post" class="stack-form"><label>Customer Name *<input name="name" required placeholder="Customer name"></label><label>Phone<input name="phone" placeholder="Mobile number"></label><label>Village<input name="village" placeholder="Village"></label><label>Address<input name="address" placeholder="Address"></label><button class="button" type="submit">+ Save Customer</button></form></section>
-<section class="panel"><div class="panel-head"><h3>Customer Directory</h3><input class="search" placeholder="Search..." data-filter="customerTable"></div><div class="table-scroll"><table id="customerTable"><thead><tr><th>Name</th><th>Phone</th><th>Village</th><th>Details</th></tr></thead><tbody><tr th:each="c : ${customers}"><td th:text="${c.name}"></td><td th:text="${c.phone}"></td><td th:text="${c.village}"></td><td><a th:href="@{/customers/{id}(id=${c.id})}">View →</a></td></tr><tr th:if="${#lists.isEmpty(customers)}"><td colspan="4" class="empty">No customers yet</td></tr></tbody></table></div></section></div>
-</main></div><script th:src="@{/js/main.js}"></script></body></html>
+
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Customers • Maurya Fertilizer Shop</title>
+
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+</head>
+
+<body>
+<div class="layout">
+
+    <!-- Sidebar -->
+    <div th:replace="~{fragments :: sidebar}"></div>
+
+    <main class="main">
+
+        <!-- Topbar -->
+        <div th:replace="~{fragments :: topbar}"></div>
+
+        <!-- Success and Error Messages -->
+        <div th:replace="~{fragments :: flash}"></div>
+
+        <div class="two-col tight">
+
+            <!-- ADD NEW CUSTOMER -->
+            <section class="panel">
+
+                <h3>Add New Customer</h3>
+
+                <form th:action="@{/customers}"
+                      method="post"
+                      class="stack-form">
+
+                    <label>
+                        Customer Name *
+
+                        <input type="text"
+                               name="name"
+                               maxlength="120"
+                               placeholder="Customer name"
+                               required>
+                    </label>
+
+                    <label>
+                        Phone
+
+                        <input type="tel"
+                               name="phone"
+                               maxlength="20"
+                               placeholder="Mobile number">
+                    </label>
+
+                    <label>
+                        Village
+
+                        <input type="text"
+                               name="village"
+                               maxlength="200"
+                               placeholder="Village">
+                    </label>
+
+                    <label>
+                        Address
+
+                        <input type="text"
+                               name="address"
+                               placeholder="Address">
+                    </label>
+
+                    <!-- OPTIONAL AADHAAR LAST 4 DIGITS -->
+                    <label>
+                        Aadhaar Last 4 Digits (Optional)
+
+                        <input type="text"
+                               name="aadhaarLast4"
+                               maxlength="4"
+                               minlength="4"
+                               pattern="[0-9]{4}"
+                               inputmode="numeric"
+                               autocomplete="off"
+                               placeholder="Example: 1234"
+                               title="Enter only the last 4 digits of Aadhaar">
+
+                        <small>
+                            Enter only the last 4 digits.
+                            Do not enter the full Aadhaar number.
+                        </small>
+                    </label>
+
+                    <button class="button" type="submit">
+                        + Save Customer
+                    </button>
+
+                </form>
+
+            </section>
+
+            <!-- CUSTOMER DIRECTORY -->
+            <section class="panel">
+
+                <div class="panel-head">
+
+                    <h3>Customer Directory</h3>
+
+                    <input class="search"
+                           placeholder="Search..."
+                           data-filter="customerTable">
+
+                </div>
+
+                <div class="table-scroll">
+
+                    <table id="customerTable">
+
+                        <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Phone</th>
+                            <th>Village</th>
+                            <th>Aadhaar</th>
+                            <th>Details</th>
+                        </tr>
+                        </thead>
+
+                        <tbody>
+
+                        <tr th:each="c : ${customers}">
+
+                            <td th:text="${c.name}">
+                                Customer Name
+                            </td>
+
+                            <td th:text="${c.phone}">
+                                Phone
+                            </td>
+
+                            <td th:text="${c.village}">
+                                Village
+                            </td>
+
+                            <td th:text="${c.maskedAadhaar != null and !#strings.isEmpty(c.maskedAadhaar) ? c.maskedAadhaar : 'Not provided'}">
+                                XXXX XXXX 1234
+                            </td>
+
+                            <td>
+                                <a th:href="@{/customers/{id}(id=${c.id})}">
+                                    View →
+                                </a>
+                            </td>
+
+                        </tr>
+
+                        <tr th:if="${#lists.isEmpty(customers)}">
+                            <td colspan="5" class="empty">
+                                No customers yet
+                            </td>
+                        </tr>
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </section>
+
+        </div>
+
+    </main>
+
+</div>
+
+<script th:src="@{/js/main.js}"></script>
+
+</body>
+</html>

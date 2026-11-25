@@ -16,4 +16,26 @@ public class Sale {
  @Column(length=36) public String billGroup; // null for legacy single-item invoices
  public BigDecimal getDue(){return total.subtract(paid);}
  public String getPaymentStatus(){return getDue().signum()==0?"Paid":(paid.signum()==0?"Unpaid":"Partial");}
+
+    // New weight-based sales only.
+    // Null for historical bag-based sales.
+    @Column(precision = 12, scale = 3)
+    public BigDecimal weightKg;
+
+    @Column(length = 10)
+    public String weightUnit;
+
+    @Column(precision = 12, scale = 2)
+    public BigDecimal pricePerKg;
+
+    public String getDisplayQuantity() {
+        if (weightKg == null) {
+            return quantity + " " +
+                    (product.unit == null ? "Unit" : product.unit);
+        }
+
+        return weightKg.stripTrailingZeros()
+                .toPlainString() + " kg";
+    }
+
 }

@@ -1,3 +1,4 @@
+
 package com.fertilizershop.config;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -48,15 +49,20 @@ public class SecurityConfig {
                                 "/images/owner-photo.jpg")
                         .permitAll()
                         .anyRequest().authenticated())
+
                 .formLogin(form -> form
                         .loginPage("/login")
+                        .failureUrl("/login?error=true")
                         .defaultSuccessUrl("/dashboard", true)
                         .permitAll())
+
                 .logout(logout -> logout
                         .logoutSuccessUrl("/login?logout")
                         .permitAll())
+
                 .headers(headers -> headers
                         .frameOptions(frame -> frame.deny()))
+
                 .build();
     }
 }

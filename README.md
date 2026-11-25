@@ -1,4 +1,4 @@
-# FertilizerShop — मौर्या खाद भंडार
+# FertilizerShop — Maurya Fertilizer Shop
 
 A complete **starter web application** for fertilizer/agriculture retail shop management with Java 17, Spring Boot 3.2.7, Thymeleaf, Spring Security, H2, Docker and Jenkins.
 
@@ -63,6 +63,6 @@ Website: `http://127.0.0.1:8090/login`.
 - Product stock is integer units (bags, kg, packets); decimal kg or multi-line invoices require enhancement.
 
 ## Rebranding / migration note
-The project artifact, Java package, Docker image/container, and database filename are now `fertilizershop` rather than `khadshop`. The visible shop name is **मौर्या खाद भंडार**.
+The project artifact, Java package, Docker image/container, and database filename are now `fertilizershop` rather than `khadshop`. The visible shop name is **Maurya Fertilizer Shop**.
 This is a *new* storage path (`./data/fertilizershop`) and Docker volume (`fertilizershop_data`); existing `khadshop` data is NOT migrated automatically. Back up the old `khadshop` H2 database / Docker volume before switching.
 The Jenkins credential ID has changed to `fertilizershop-admin`; create it in Jenkins before building.

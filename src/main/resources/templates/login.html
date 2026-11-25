@@ -1,3 +1,4 @@
+
 <!doctype html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
@@ -5,7 +6,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login • Maurya Fertilizer Shop</title>
     <link rel="stylesheet" th:href="@{/css/main.css}">
+
+    <style>
+        /* Invalid Login Credentials Error */
+        .login-error {
+            background-color: #fee2e2;
+            color: #b91c1c;
+            border: 1px solid #fca5a5;
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-size: 14px;
+            font-weight: 600;
+            text-align: center;
+        }
+    </style>
 </head>
+
 <body class="login-body">
 
 <div class="login-card">
@@ -14,7 +31,10 @@
         <div class="login-art-content">
             <div class="plant">🌾</div>
             <h1>Maurya Fertilizer Shop</h1>
-            <p>Manage your fertilizer inventory, sales, customer accounts, and payments in one place.</p>
+            <p>
+                Manage your fertilizer inventory, sales,
+                customer accounts, and payments in one place.
+            </p>
 
             <div class="login-tags">
                 <span>Inventory</span>
@@ -25,28 +45,66 @@
     </div>
 
     <div class="login-form">
+
         <div class="eyebrow">SHOP MANAGER</div>
+
         <h2>Welcome Back!</h2>
+
         <p>Sign in with your shop administrator account.</p>
 
-        <div th:if="${message}" class="alert success" th:text="${message}"></div>
-        <div th:if="${error}" class="alert error" th:text="${error}"></div>
+        <!-- Success Message -->
+        <div th:if="${message}"
+             class="alert success"
+             th:text="${message}">
+        </div>
 
-        <form th:action="@{/login}" method="post" class="stack-form">
+        <!-- Wrong Username or Password Message -->
+        <div th:if="${param.error}"
+             class="login-error"
+             role="alert">
+            ⚠ Invalid username or password. Please try again.
+        </div>
+
+        <!-- Other Error Messages -->
+        <div th:if="${error != null and param.error == null}"
+             class="alert error"
+             th:text="${error}">
+        </div>
+
+        <!-- Login Form -->
+        <form th:action="@{/login}"
+              method="post"
+              class="stack-form">
+
             <label>
                 Username
-                <input type="text" name="username" placeholder="Admin username" required>
+                <input type="text"
+                       name="username"
+                       placeholder="Admin username"
+                       autocomplete="username"
+                       required>
             </label>
 
             <label>
                 Password
-                <input type="password" name="password" placeholder="Password" required>
+                <input type="password"
+                       name="password"
+                       placeholder="Password"
+                       autocomplete="current-password"
+                       required>
             </label>
 
-            <button class="button" type="submit">Sign In →</button>
+            <button class="button" type="submit">
+                Sign In →
+            </button>
+
         </form>
 
-        <small>Administrator credentials are configured through environment variables.</small>
+        <small>
+            Administrator credentials are configured
+            through environment variables.
+        </small>
+
     </div>
 
 </div>

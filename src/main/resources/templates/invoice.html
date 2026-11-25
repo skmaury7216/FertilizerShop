@@ -1,13 +1,174 @@
-<!doctype html><html lang="en" xmlns:th="http://www.thymeleaf.org"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Invoice • Maurya Fertilizer Shop</title><link rel="stylesheet" th:href="@{/css/main.css}"></head><body><div class="layout"><div th:replace="~{fragments :: sidebar}"></div><main class="main"><div th:replace="~{fragments :: topbar}"></div><div th:replace="~{fragments :: flash}"></div>
-<div class="invoice-actions no-print"><a th:href="@{/sales}" class="button light">← Back to Sales</a><button onclick="window.print()" class="button">Print Invoice</button></div>
-<div class="panel invoice"><div class="invoice-head"><div><h2>🌾 Maurya Fertilizer Shop</h2><p>Shop billing receipt · Demo / internal use</p></div><div><h3 th:text="'INVOICE #'+${sale.id}"></h3><p th:text="${#temporals.format(sale.createdAt,'dd MMM yyyy HH:mm')}"></p></div></div>
-<div class="invoice-columns"><div><span class="muted">BILLED TO</span><h3 th:text="${sale.customer.name}"></h3><p th:text="${sale.customer.village}"></p><p th:text="${sale.customer.phone}"></p></div><div><span class="muted">PAYMENT STATUS</span><h3 th:text="${invoiceStatus}"></h3><p>Payment records are entered manually</p></div></div>
-<div class="table-scroll"><table><thead><tr><th>Product</th><th>Quantity</th><th>Unit Price</th><th>Amount</th></tr></thead><tbody><tr th:each="item : ${invoiceItems}"><td th:text="${item.product.name}"></td><td th:text="${item.quantity}"></td><td th:text="'₹'+${item.unitPrice}"></td><td th:text="'₹'+${item.total}"></td></tr></tbody></table></div>
-<div class="invoice-totals"><div><span>Total</span><strong th:text="'₹'+${invoiceTotal}"></strong></div><div><span>Paid</span><strong th:text="'₹'+${invoicePaid}"></strong></div><div><span>Balance Due</span><strong class="warn" th:text="'₹'+${invoiceDue}"></strong></div></div>
-<div class="no-print" th:if="${invoiceDue.signum() > 0}"><h3>Record Outstanding Payment</h3><p class="muted">Record a payment only after receiving it. This is not an integrated UPI payment gateway.</p>
-<form th:action="@{/sales/{id}/payments(id=${sale.id})}" method="post" class="form-grid">
-<label>Received Amount (₹)<input type="number" step="0.01" min="0.01" name="amount" th:attr="max=${invoiceDue}" required></label>
-<label>Method<select name="method"><option>Cash</option><option>UPI (verified offline)</option><option>Bank Transfer (verified offline)</option></select></label>
-<label>Reference<input name="reference" placeholder="Receipt / UTR number"></label><div class="submit-cell"><button class="button" type="submit">Record Payment</button></div></form></div>
-<h3>Payment History</h3><div class="table-scroll"><table><thead><tr><th>Date</th><th>Amount</th><th>Method</th><th>Reference</th></tr></thead><tbody><tr th:each="p:${payments}"><td th:text="${#temporals.format(p.paidAt,'dd MMM yyyy HH:mm')}"></td><td th:text="'₹'+${p.amount}"></td><td th:text="${p.method}"></td><td th:text="${p.reference}"></td></tr><tr th:if="${#lists.isEmpty(payments)}"><td colspan="4" class="muted">No payments recorded</td></tr></tbody></table></div></div>
-</main></div><script th:src="@{/js/main.js}"></script></body></html>
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice • Maurya Fertilizer Shop</title>
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+</head>
+<body>
+<div class="layout no-print-shell">
+    <div th:replace="~{fragments :: sidebar}"></div>
+
+    <main class="main">
+        <div th:replace="~{fragments :: topbar}"></div>
+        <div th:replace="~{fragments :: flash}"></div>
+
+        <div class="invoice-actions no-print">
+            <a th:href="@{/sales}" class="button light">← Back to Sales</a>
+            <button onclick="window.print()" class="button">Print Invoice</button>
+        </div>
+
+        <div class="invoice-sheet">
+
+            <!-- Header -->
+            <div class="invoice-top">
+                <div class="invoice-company">
+                    <h2>Maurya Fertilizer Shop</h2>
+                    <p>Andhi Andha Ashram, </p>
+                    <p>Barun, 224127 Ayodhya</p>
+                    <p>Uttar Pradesh, India</p>
+                    <p th:text="${sale.customer != null ? sale.customer.phone : ''}"></p>
+                </div>
+
+                <div class="invoice-title-block">
+                    <h1>INVOICE</h1>
+                </div>
+            </div>
+
+            <!-- Invoice meta -->
+            <div class="invoice-meta-box">
+                <div class="invoice-meta-left">
+                    <p><strong>Invoice #</strong>
+                        <span th:text="${sale.id}">001</span>
+                    </p>
+                    <p>
+                        <strong>Invoice Date:</strong>
+                        <span th:text="${#temporals.format(sale.createdAt,'dd/MM/yyyy')}">08/08/2027</span>
+                    </p>
+                    <p>
+                        <strong>Due Date:</strong>
+                        <span th:text="${#temporals.format(sale.createdAt,'dd/MM/yyyy')}">08/08/2027</span>
+                    </p>
+                </div>
+
+                <div class="invoice-meta-right">
+                    <p><strong>Bill To</strong></p>
+                    <p th:text="${sale.customer != null ? sale.customer.name : ''}">Customer Name</p>
+                    <p th:text="${sale.customer != null ? sale.customer.village : ''}">Street Address</p>
+                    <p th:text="${sale.customer != null ? sale.customer.phone : ''}">Phone</p>
+                    <p th:if="${sale.customer != null and sale.customer.aadharNumber != null and !#strings.isEmpty(sale.customer.aadharNumber)}"
+                       th:text="'Aadhar: ' + ${sale.customer.aadharNumber}">
+                        Aadhar: 0000 0000 0000
+                    </p>
+                </div>
+            </div>
+
+            <!-- Items table -->
+            <table class="invoice-table">
+                <thead>
+                <tr>
+                    <th>NO.</th>
+                    <th>DESCRIPTION</th>
+                    <th>QTY</th>
+                    <th>PRICE</th>
+                    <th>TOTAL</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="item, stat : ${invoiceItems}">
+                    <td th:text="${stat.count}">1</td>
+                    <td th:text="${item.product.name}">DAP 50 KG</td>
+                    <td th:text="${item.quantity}">1</td>
+                    <td th:text="'₹' + ${item.unitPrice}">₹100.00</td>
+                    <td th:text="'₹' + ${item.total}">₹100.00</td>
+                </tr>
+
+                <!-- empty rows for print look -->
+                <tr th:if="${#lists.size(invoiceItems) < 8}" th:each="i : ${#numbers.sequence(1, 8 - #lists.size(invoiceItems))}">
+                    <td>&nbsp;</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                </tbody>
+            </table>
+
+            <!-- Payment + totals -->
+            <div class="invoice-bottom-grid">
+                <div class="invoice-payment-box">
+                    <h4>PAYMENT METHOD</h4>
+                    <p>
+                        <strong>Status:</strong>
+                        <span th:text="${invoiceStatus}">Paid</span>
+                    </p>
+                    <p>
+                        <strong>Paid Amount:</strong>
+                        <span th:text="'₹' + ${invoicePaid}">₹0.00</span>
+                    </p>
+                    <p>
+                        <strong>Payment Note:</strong>
+                        Manual / Offline Entry
+                    </p>
+                    <p>
+                        <strong>Reference:</strong>
+                        <span th:if="${payments != null and !#lists.isEmpty(payments)}"
+                              th:text="${payments[0].reference}">N/A</span>
+                        <span th:if="${payments == null or #lists.isEmpty(payments)}">N/A</span>
+                    </p>
+                </div>
+
+                <div class="invoice-summary-box">
+                    <table>
+                        <tr>
+                            <td>SUBTOTAL</td>
+                            <td th:text="'₹' + ${invoiceTotal}">₹0.00</td>
+                        </tr>
+                        <tr>
+                            <td>DISCOUNT</td>
+                            <td>₹0.00</td>
+                        </tr>
+                        <tr>
+                            <td>TAX</td>
+                            <td>₹0.00</td>
+                        </tr>
+                        <tr class="grand-total">
+                            <td>TOTAL</td>
+                            <td th:text="'₹' + ${invoiceTotal}">₹0.00</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Notes + Logo -->
+            <div class="invoice-footer-grid">
+                <div class="invoice-notes">
+                    <h4>ADDITIONAL NOTES AND TERMS :</h4>
+                    <p>
+                        Thank you for your purchase.
+                        Goods once sold will be counted as final.
+                        Please verify quantity, weight, and amount at the time of billing.
+                    </p>
+                    <p th:if="${invoiceDue.signum() > 0}">
+                        Outstanding Balance:
+                        <strong th:text="'₹' + ${invoiceDue}">₹0.00</strong>
+                    </p>
+                </div>
+
+                <div class="invoice-logo-box">
+    <img th:src="@{/images/logo.png}"
+         src="/images/logo.png"
+         alt="Maurya Fertilizer Shop Logo"
+         class="invoice-logo">
+</div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+</div>
+
+<script th:src="@{/js/main.js}"></script>
+</body>
+</html>

@@ -15,4 +15,26 @@ public class Product {
  @Column(nullable=false) public Integer reorderLevel=10;
  public String description;
  public boolean active=true;
+
+    // Weight of one full fertilizer bag, in kilograms
+    @Column(precision = 10, scale = 3)
+    public BigDecimal bagWeightKg;
+
+    // Fertilizer remaining in an opened bag
+    @Column(precision = 12, scale = 3)
+    public BigDecimal looseStockKg = BigDecimal.ZERO;
+
+    public BigDecimal getAvailableKg() {
+        if (bagWeightKg == null) {
+            return BigDecimal.ZERO;
+        }
+
+        BigDecimal loose = looseStockKg == null
+                ? BigDecimal.ZERO : looseStockKg;
+
+        return bagWeightKg.multiply(
+                BigDecimal.valueOf(stock)
+        ).add(loose);
+    }
+
 }
