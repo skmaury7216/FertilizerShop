@@ -322,3 +322,22 @@
         font-size: 29px;
     }
 }
+
+/* Application Version beside Profile Icon */
+.topbar-right .app-version {
+    display: inline-flex;
+    align-items: center;
+    font-size: 12px;
+    font-weight: 600;
+    color: #64748b;
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 6px 10px;
+    margin-left: 10px;
+    white-space: nowrap;
+}
+
+.topbar-right .app-version + .avatar {
+    margin-left: 8px;
+}
