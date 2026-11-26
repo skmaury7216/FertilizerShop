@@ -1,59 +1,146 @@
 
 <!doctype html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
+
 <body>
 
+<!-- =====================================
+     SIDEBAR
+     ===================================== -->
+
 <div th:fragment="sidebar" class="sidebar">
+
     <div class="logo">
+
         <img th:src="@{/images/owner-photo.jpg}"
              src="/images/owner-photo.jpg"
              alt="Shop owner photo"
              class="owner-photo-sidebar">
-        <span>Maurya Fertilizer Shop
+
+        <span>
+            Maurya Fertilizer Shop
+
             <small>FERTILIZER SHOP</small>
         </span>
+
     </div>
 
-    <div class="sidebar-label">MAIN MENU</div>
-    <a th:classappend="${active == 'dashboard'} ? ' active' : ''" th:href="@{/dashboard}">▦ <span>Dashboard</span></a>
-    <a th:classappend="${active == 'products'} ? ' active' : ''" th:href="@{/products}">◈ <span>Products / Stock</span></a>
-    <a th:classappend="${active == 'sales'} ? ' active' : ''" th:href="@{/sales}">▤ <span>Sales &amp; Bills</span></a>
-    <a th:classappend="${active == 'purchases'} ? ' active' : ''" th:href="@{/purchases}">⊞ <span>Stock Purchase</span></a>
+    <div class="sidebar-label">
+        MAIN MENU
+    </div>
 
-    <div class="sidebar-label">MANAGEMENT</div>
-    <a th:classappend="${active == 'customers'} ? ' active' : ''" th:href="@{/customers}">♙ <span>Customers</span></a>
-    <a th:classappend="${active == 'suppliers'} ? ' active' : ''" th:href="@{/suppliers}">▥ <span>Suppliers</span></a>
-    <a th:classappend="${active == 'payments'} ? ' active' : ''" th:href="@{/payments}">₹ <span>Payments &amp; Dues</span></a>
-    <a th:classappend="${active == 'reports'} ? ' active' : ''" th:href="@{/reports}">◫ <span>Reports</span></a>
+    <a th:classappend="${active == 'dashboard'} ? ' active' : ''"
+       th:href="@{/dashboard}">
+        ▦ <span>Dashboard</span>
+    </a>
+
+    <a th:classappend="${active == 'products'} ? ' active' : ''"
+       th:href="@{/products}">
+        ◈ <span>Products / Stock</span>
+    </a>
+
+    <a th:classappend="${active == 'sales'} ? ' active' : ''"
+       th:href="@{/sales}">
+        ▤ <span>Sales &amp; Bills</span>
+    </a>
+
+    <a th:classappend="${active == 'purchases'} ? ' active' : ''"
+       th:href="@{/purchases}">
+        ⊞ <span>Stock Purchase</span>
+    </a>
+
+    <div class="sidebar-label">
+        MANAGEMENT
+    </div>
+
+    <a th:classappend="${active == 'customers'} ? ' active' : ''"
+       th:href="@{/customers}">
+        ♙ <span>Customers</span>
+    </a>
+
+    <a th:classappend="${active == 'suppliers'} ? ' active' : ''"
+       th:href="@{/suppliers}">
+        ▥ <span>Suppliers</span>
+    </a>
+
+    <a th:classappend="${active == 'payments'} ? ' active' : ''"
+       th:href="@{/payments}">
+        ₹ <span>Payments &amp; Dues</span>
+    </a>
+
+    <a th:classappend="${active == 'reports'} ? ' active' : ''"
+       th:href="@{/reports}">
+        ◫ <span>Reports</span>
+    </a>
 
     <div class="sidebar-bottom">
+
         <form th:action="@{/logout}" method="post">
-            <button class="logout" type="submit">↪ Log out</button>
+            <button class="logout" type="submit">
+                ↪ Log out
+            </button>
         </form>
-        <small>Local shop management • v1.0.0</small>
+
+        <!-- Dynamic Sidebar Version -->
+        <small th:text="|Local shop management • V ${appVersion}|">
+            Local shop management • V 1.0
+        </small>
+
     </div>
+
 </div>
 
+<!-- =====================================
+     TOPBAR
+     ===================================== -->
+
 <div th:fragment="topbar" class="topbar">
+
     <div>
-        <span class="eyebrow">Maurya Fertilizer Shop / WORKSPACE</span>
-        <h1 th:text="${pageTitle}">Dashboard</h1>
+
+        <span class="eyebrow">
+            Maurya Fertilizer Shop / WORKSPACE
+        </span>
+
+        <h1 th:text="${pageTitle}">
+            Dashboard
+        </h1>
+
     </div>
 
     <div class="topbar-right">
+
         <span class="today" id="today"></span>
 
-        <!-- Application Version -->
-        <span class="app-version">Version 1.0.0</span>
+        <!-- Dynamic Application Version -->
+        <span class="app-version"
+              th:text="|V ${appVersion}|">
+            V 1.0
+        </span>
 
         <!-- Profile Icon -->
         <span class="avatar">MK</span>
+
     </div>
+
 </div>
 
+<!-- =====================================
+     FLASH MESSAGES
+     ===================================== -->
+
 <div th:fragment="flash" class="alerts">
-    <div th:if="${message}" class="alert success" th:text="${message}"></div>
-    <div th:if="${error}" class="alert error" th:text="${error}"></div>
+
+    <div th:if="${message}"
+         class="alert success"
+         th:text="${message}">
+    </div>
+
+    <div th:if="${error}"
+         class="alert error"
+         th:text="${error}">
+    </div>
+
 </div>
 
 </body>

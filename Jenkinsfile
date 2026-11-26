@@ -22,9 +22,13 @@ pipeline {
 
         DB_URL = 'jdbc:mysql://fertilizershop-mysql:3306/fertilizershop_db'
         DB_USER = 'fertilizershop_user'
+
+        // Version assigned in Prepare Version stage
+        DEPLOY_VERSION = ''
     }
 
     stages {
+
         stage('Checkout') {
             steps {
                 checkout scm
@@ -37,10 +41,40 @@ pipeline {
             }
         }
 
+        stage('Prepare Version') {
+            steps {
+                script {
+                    env.DEPLOY_VERSION = sh(
+                        script: '''
+                            set -eu
+
+                            VERSION_FILE="$JENKINS_HOME/fertilizershop-deployed-version.txt"
+
+                            if [ ! -f "$VERSION_FILE" ]; then
+                                echo "1.0"
+                            else
+                                LAST_VERSION=$(cat "$VERSION_FILE")
+
+                                echo "$LAST_VERSION" |
+                                    grep -Eq '^[0-9]+[.][0-9]+$'
+
+                                echo "$LAST_VERSION" |
+                                    awk -F. '{print $1 "." ($2 + 1)}'
+                            fi
+                        ''',
+                        returnStdout: true
+                    ).trim()
+
+                    echo "Preparing version V ${env.DEPLOY_VERSION}"
+                }
+            }
+        }
+
         stage('Build Docker Image') {
             steps {
                 sh '''
                     set -eu
+
                     docker build -t "$IMAGE_NAME" .
                 '''
             }
@@ -52,18 +86,18 @@ pipeline {
                     set -eu
 
                     docker inspect \
-                      -f '{{.State.Running}}' \
-                      "$MYSQL_CONTAINER" | grep -qx true
+                        -f '{{.State.Running}}' \
+                        "$MYSQL_CONTAINER" | grep -qx true
 
-                    docker network inspect "$DOCKER_NETWORK" \
-                      >/dev/null
+                    docker network inspect \
+                        "$DOCKER_NETWORK" >/dev/null
 
                     docker inspect \
-                      -f '{{json .NetworkSettings.Networks}}' \
-                      "$MYSQL_CONTAINER" |
-                      grep -q "$DOCKER_NETWORK"
+                        -f '{{json .NetworkSettings.Networks}}' \
+                        "$MYSQL_CONTAINER" |
+                        grep -q "$DOCKER_NETWORK"
 
-                    echo "MySQL container and Docker network are ready"
+                    echo "MySQL container and network are ready"
                 '''
             }
         }
@@ -89,23 +123,26 @@ pipeline {
                         export SHOP_ADMIN_USER="$SHOP_USER"
                         export SHOP_ADMIN_PASSWORD="$SHOP_PASS"
 
+                        # This replaces only the app container.
+                        # Do not remove MySQL container or volumes.
                         docker rm -f "$CONTAINER_NAME" \
-                          2>/dev/null || true
+                            2>/dev/null || true
 
                         docker run -d \
-                          --name "$CONTAINER_NAME" \
-                          --restart unless-stopped \
-                          --network "$DOCKER_NETWORK" \
-                          -p 127.0.0.1:8090:8080 \
-                          -e DB_URL \
-                          -e DB_USER \
-                          -e DB_PASSWORD \
-                          -e SHOP_ADMIN_USER \
-                          -e SHOP_ADMIN_PASSWORD \
-                          -e SHOP_DEMO_DATA=false \
-                          "$IMAGE_NAME"
+                            --name "$CONTAINER_NAME" \
+                            --restart unless-stopped \
+                            --network "$DOCKER_NETWORK" \
+                            -p 127.0.0.1:8090:8080 \
+                            -e DB_URL \
+                            -e DB_USER \
+                            -e DB_PASSWORD \
+                            -e SHOP_ADMIN_USER \
+                            -e SHOP_ADMIN_PASSWORD \
+                            -e SHOP_DEMO_DATA=false \
+                            -e SHOP_APP_VERSION="$DEPLOY_VERSION" \
+                            "$IMAGE_NAME"
 
-                        echo "FertilizerShop deployment started"
+                        echo "Started FertilizerShop V $DEPLOY_VERSION"
                     '''
                 }
             }
@@ -118,12 +155,14 @@ pipeline {
 
                     for i in $(seq 1 40); do
                         if curl -fsS -o /dev/null \
-                          http://127.0.0.1:8090/login; then
+                            http://127.0.0.1:8090/login; then
 
                             echo "FertilizerShop is responding"
+
                             docker ps \
-                              --filter name=^/fertilizershop$ \
-                              --format "table {{.Names}}\\t{{.Status}}\\t{{.Ports}}"
+                                --filter name=^/fertilizershop$ \
+                                --format "table {{.Names}}\\t{{.Status}}\\t{{.Ports}}"
+
                             exit 0
                         fi
 
@@ -136,15 +175,34 @@ pipeline {
                 '''
             }
         }
+
+        stage('Record Successful Version') {
+            steps {
+                sh '''
+                    set -eu
+
+                    VERSION_FILE="$JENKINS_HOME/fertilizershop-deployed-version.txt"
+
+                    TEMP_FILE=$(mktemp \
+                        "$JENKINS_HOME/.fertilizershop-version.XXXXXX")
+
+                    printf '%s\\n' "$DEPLOY_VERSION" > "$TEMP_FILE"
+
+                    mv -f "$TEMP_FILE" "$VERSION_FILE"
+
+                    echo "Deployment version recorded: V $DEPLOY_VERSION"
+                '''
+            }
+        }
     }
 
     post {
         success {
-            echo 'FertilizerShop CI/CD SUCCESS'
+            echo "FertilizerShop CI/CD SUCCESS"
         }
 
         failure {
-            echo 'FertilizerShop CI/CD FAILED'
+            echo "FertilizerShop CI/CD FAILED"
         }
     }
 }
