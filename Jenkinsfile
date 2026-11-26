@@ -47,13 +47,13 @@ pipeline {
 
                             VERSION_FILE="$JENKINS_HOME/fertilizershop-deployed-version.txt"
 
-                            test -w "$JENKINS_HOME" || {
-                                echo "ERROR: Jenkins home is not writable"
+                            if [ ! -w "$JENKINS_HOME" ]; then
+                                echo "ERROR: Jenkins home is not writable" >&2
                                 exit 1
-                            }
+                            fi
 
                             if [ ! -f "$VERSION_FILE" ]; then
-                                echo "1.0"
+                                printf '1.0\\n'
                             else
                                 LAST_VERSION=$(cat "$VERSION_FILE")
 
@@ -67,7 +67,8 @@ pipeline {
                         returnStdout: true
                     ).trim()
 
-                    if (!(nextVersion ==~ /^[0-9]+\\.[0-9]+$/)) {
+                    // Correct regex for versions such as 1.0 and 1.1
+                    if (!(nextVersion ==~ /^[0-9]+[.][0-9]+$/)) {
                         error("Invalid deployment version: ${nextVersion}")
                     }
 
@@ -82,7 +83,6 @@ pipeline {
             steps {
                 sh '''
                     set -eu
-
                     docker build -t "$IMAGE_NAME" .
                 '''
             }
@@ -151,8 +151,8 @@ pipeline {
                         export SHOP_ADMIN_USER="$SHOP_USER"
                         export SHOP_ADMIN_PASSWORD="$SHOP_PASS"
 
-                        # Remove only the application container.
-                        # MySQL and its volumes remain untouched.
+                        # Only replace the application container.
+                        # Never remove the MySQL container or its volumes.
                         docker rm -f "$CONTAINER_NAME" \
                             2>/dev/null || true
 
@@ -200,7 +200,7 @@ pipeline {
 
                     echo "Deployment verification failed"
 
-                    docker logs --tail 80 fertilizershop
+                    docker logs --tail 80 "$CONTAINER_NAME"
 
                     exit 1
                 '''
