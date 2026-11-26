@@ -4,37 +4,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-
     <title>Sales &amp; Bills • Maurya Fertilizer Shop</title>
-
     <link rel="stylesheet" th:href="@{/css/main.css}">
 </head>
-
 <body>
 <div class="layout">
 
-    <!-- Sidebar -->
     <div th:replace="~{fragments :: sidebar}"></div>
 
     <main class="main">
-
-        <!-- Topbar -->
         <div th:replace="~{fragments :: topbar}"></div>
-
-        <!-- Success and Error Messages -->
         <div th:replace="~{fragments :: flash}"></div>
 
-        <!-- ====================================== -->
-        <!-- NEW: FERTILIZER WEIGHT BILLING -->
-        <!-- ====================================== -->
-
-        <div class="panel">
+        <!-- SINGLE PRODUCT WEIGHT BILLING -->
+        <section class="panel">
 
             <h3>Sell Fertilizer by Weight</h3>
 
             <p class="muted">
-                Sell fertilizer in grams, kilograms, or full bags.
-                The price is calculated automatically from the bag price.
+                Sell fertilizer in grams, kilograms or full bags.
+                The price is calculated automatically.
             </p>
 
             <form th:action="@{/sales/weight}"
@@ -49,8 +38,8 @@
                         <input type="text"
                                name="customerName"
                                maxlength="120"
-                               placeholder="Enter customer name"
-                               required>
+                               required
+                               placeholder="Customer name">
                     </label>
 
                     <label>
@@ -71,7 +60,6 @@
 
                     <label>
                         Select Fertilizer *
-
                         <select name="productId"
                                 id="weightProduct"
                                 required>
@@ -86,14 +74,13 @@
                                              data-weight=${p.bagWeightKg},
                                              data-stock=${p.availableKg}"
                                     th:text="${p.name}">
+                                Fertilizer
                             </option>
-
                         </select>
                     </label>
 
                     <label>
                         Quantity *
-
                         <input type="number"
                                name="quantity"
                                id="weightQuantity"
@@ -105,117 +92,75 @@
 
                     <label>
                         Quantity Unit *
-
                         <select name="unit"
                                 id="weightUnit"
                                 required>
-
-                            <option value="kg">
-                                Kilogram (kg)
-                            </option>
-
-                            <option value="g">
-                                Gram (g)
-                            </option>
-
-                            <option value="bag">
-                                Full Bag
-                            </option>
-
+                            <option value="kg">Kilogram (kg)</option>
+                            <option value="g">Gram (g)</option>
+                            <option value="bag">Full Bag</option>
                         </select>
                     </label>
 
                 </div>
 
-                <!-- Stock Information -->
-                <div style="margin-top:18px">
-
-                    <p>
-                        Available Stock:
+                <div class="tip">
+                    <p>Available Stock:
                         <strong id="weightStock">—</strong>
                     </p>
-
-                    <p>
-                        Bag Weight:
+                    <p>Bag Weight:
                         <strong id="selectedBagWeight">—</strong>
                     </p>
-
-                    <p>
-                        Price per Bag:
+                    <p>Price per Bag:
                         <strong id="selectedBagPrice">₹0.00</strong>
                     </p>
-
+                    <p>Price per Kg:
+                        <strong id="selectedKgPrice">₹0.00</strong>
+                    </p>
                 </div>
 
-                <!-- Calculated Amount -->
-                <div class="mini-total"
-                     style="margin-top:20px;padding:15px">
-
-                    <h3>
-                        Bill Total:
-                        <strong id="weightTotal">
-                            ₹0.00
-                        </strong>
-                    </h3>
-
-                    <p>
-                        Weight:
-                        <strong id="calculatedWeight">
-                            0 kg
-                        </strong>
+                <div class="mini-total">
+                    <p>Bill Total:
+                        <strong id="weightTotal">₹0.00</strong>
                     </p>
-
-                    <p>
-                        Balance Due:
-                        <strong id="weightDue">
-                            ₹0.00
-                        </strong>
+                    <p>Weight:
+                        <strong id="calculatedWeight">0 kg</strong>
                     </p>
-
+                    <p>Balance Due:
+                        <strong id="weightDue">₹0.00</strong>
+                    </p>
                 </div>
 
-                <!-- Payment Details -->
-                <div class="form-grid"
-                     style="margin-top:20px">
+                <div class="form-grid">
 
                     <label>
                         Paid Now (₹)
-
                         <input type="number"
                                name="advance"
                                id="weightPaid"
                                value="0"
                                min="0"
-                               step="0.01">
+                               step="0.01"
+                               required>
                     </label>
 
                     <label>
                         Payment Method
-
                         <select name="method">
-
-                            <option value="Cash">
-                                Cash
-                            </option>
-
+                            <option value="Cash">Cash</option>
                             <option value="UPI (verified offline)">
                                 UPI (verified offline)
                             </option>
-
                             <option value="Bank Transfer (verified offline)">
                                 Bank Transfer (verified offline)
                             </option>
-
                         </select>
                     </label>
 
                     <label>
                         Payment Reference
-
-                        <input type="text"
-                               name="reference"
+                        <input name="reference"
                                maxlength="150"
-                               placeholder="Optional">
+                               placeholder="After payment verification">
                     </label>
 
                 </div>
@@ -223,50 +168,37 @@
                 <button class="button"
                         id="weightSubmit"
                         type="submit"
-                        style="margin-top:20px"
                         disabled>
-
                     Generate Weight-Based Bill
-
                 </button>
 
                 <p class="muted"
                    id="weightValidation"
-                   role="status"
-                   aria-live="polite"
-                   style="margin-top:10px">
-                    Select a fertilizer with a configured bag weight.
+                   aria-live="polite">
+                    Select a fertilizer with valid bag weight and price.
                 </p>
 
             </form>
+        </section>
 
-        </div>
+        <!-- MULTI-PRODUCT GRAM / KG / BAG BILLING -->
+        <section class="panel">
 
-
-        <!-- ====================================== -->
-        <!-- EXISTING MULTI-PRODUCT BILLING -->
-        <!-- ====================================== -->
-
-        <div class="panel">
-
-            <h3>New Customer &amp; Sales Invoice</h3>
+            <h3>New Customer &amp; Multi-Product Invoice</h3>
 
             <p class="muted">
-                Enter new customer details and add multiple
-                products to the same invoice.
-                Stock is reduced after a sale.
-                For credit sales, enter an amount lower than
-                the total in Paid Now.
+                Add different fertilizers in grams, kilograms or full bags.
+                Each product can have a different bag weight.
             </p>
 
-            <form th:action="@{/sales}"
+            <form th:action="@{/sales/mixed}"
                   method="post"
                   id="multi-sale-form">
 
                 <div class="form-grid">
 
                     <label>
-                        New Customer Name *
+                        Customer Name *
                         <input name="customerName"
                                maxlength="120"
                                required
@@ -275,8 +207,8 @@
 
                     <label>
                         Mobile Number
-                        <input type="tel"
-                               name="customerPhone"
+                        <input name="customerPhone"
+                               type="tel"
                                maxlength="20"
                                placeholder="Optional">
                     </label>
@@ -289,16 +221,27 @@
                     </label>
 
                     <label>
+                        Aadhaar Last 4 Digits (Optional)
+                        <input name="aadhaarLast4"
+                               type="text"
+                               maxlength="4"
+                               minlength="4"
+                               pattern="[0-9]{4}"
+                               inputmode="numeric"
+                               autocomplete="off"
+                               placeholder="Last 4 digits only">
+                        <small>Do not enter the full Aadhaar number.</small>
+                    </label>
+
+                    <label>
                         Scan Product Barcode
-
                         <input id="sale-barcode-scan"
-                               placeholder="Scan with USB/Bluetooth scanner, then Enter"
-                               autocomplete="off">
-
+                               type="text"
+                               autocomplete="off"
+                               placeholder="Scan barcode, then Enter">
                         <small id="sale-barcode-status"
                                aria-live="polite">
-                            Scanning adds/selects a product row;
-                            it does not submit the bill.
+                            Scanner adds one full bag.
                         </small>
                     </label>
 
@@ -310,69 +253,97 @@
 
                 <div id="invoice-lines">
 
-                    <div class="invoice-line form-grid"
-                         style="align-items:end;margin-bottom:15px">
+                    <div class="invoice-line"
+                         style="padding:16px;
+                                border:1px solid #e8eef1;
+                                border-radius:12px;
+                                margin-bottom:16px">
 
-                        <label>
-                            Product *
+                        <div class="form-grid">
 
-                            <select name="productIds"
-                                    class="invoice-product"
-                                    required>
+                            <label>
+                                Product *
+                                <select name="productIds"
+                                        class="invoice-product"
+                                        required>
 
-                                <option value="">
-                                    Select product
-                                </option>
+                                    <option value="">
+                                        Select Product
+                                    </option>
 
-                                <option th:each="p : ${products}"
-                                        th:value="${p.id}"
-                                        th:attr="data-price=${p.sellingPrice},
-                                                 data-stock=${p.stock},
-                                                 data-barcode=${p.barcode}"
-                                        th:text="${p.name}+' · Available '+${p.stock}">
-                                </option>
+                                    <option th:each="p : ${products}"
+                                            th:value="${p.id}"
+                                            th:attr="data-price=${p.sellingPrice},
+                                                     data-weight=${p.bagWeightKg},
+                                                     data-stock=${p.availableKg},
+                                                     data-barcode=${p.barcode}"
+                                            th:text="${p.name}">
+                                        Product
+                                    </option>
 
-                            </select>
-                        </label>
+                                </select>
+                            </label>
 
-                        <label>
-                            Quantity *
+                            <label>
+                                Quantity *
+                                <input type="number"
+                                       name="quantities"
+                                       class="invoice-quantity"
+                                       value="1"
+                                       min="0.001"
+                                       step="0.001"
+                                       required>
+                            </label>
 
-                            <input type="number"
-                                   min="1"
-                                   name="quantities"
-                                   class="invoice-quantity"
-                                   value="1"
-                                   required>
-                        </label>
+                            <label>
+                                Quantity Unit *
+                                <select name="units"
+                                        class="invoice-unit"
+                                        required>
+                                    <option value="kg">Kilogram (kg)</option>
+                                    <option value="g">Gram (g)</option>
+                                    <option value="bag">Full Bag</option>
+                                </select>
+                            </label>
 
-                        <label>
-                            Unit Price (₹) *
+                            <div style="align-self:end">
+                                <p>Bag Weight:
+                                    <strong class="invoice-bag-weight">—</strong>
+                                </p>
+                                <p>Bag Price:
+                                    <strong class="invoice-bag-price">₹0.00</strong>
+                                </p>
+                                <p>Available:
+                                    <strong class="invoice-stock">—</strong>
+                                </p>
+                            </div>
 
-                            <input type="number"
-                                   min="0.01"
-                                   step="0.01"
-                                   name="unitPrices"
-                                   class="invoice-price"
-                                   required>
-                        </label>
+                        </div>
 
-                        <div>
+                        <div style="display:flex;
+                                    flex-wrap:wrap;
+                                    justify-content:space-between;
+                                    align-items:center;
+                                    gap:12px;
+                                    margin-top:15px">
 
-                            <span>
-                                Line Total:
-                                <strong class="invoice-line-total">
-                                    ₹0.00
-                                </strong>
+                            <span>Weight:
+                                <strong class="invoice-weight">0 kg</strong>
+                            </span>
+
+                            <span>Line Total:
+                                <strong class="invoice-line-total">₹0.00</strong>
                             </span>
 
                             <button type="button"
-                                    class="button light invoice-remove"
-                                    style="margin-left:14px">
+                                    class="button light invoice-remove">
                                 Remove
                             </button>
 
                         </div>
+
+                        <p class="invoice-row-warning muted"
+                           aria-live="polite"></p>
 
                     </div>
 
@@ -381,335 +352,145 @@
                 <button type="button"
                         id="add-invoice-product"
                         class="button light">
-
                     + Add Another Product
-
                 </button>
 
-                <div class="form-grid"
-                     style="margin-top:24px">
+                <div class="form-grid" style="margin-top:24px">
 
                     <label>
                         Paid Now (₹)
-
                         <input type="number"
-                               min="0"
-                               step="0.01"
                                name="advance"
                                id="invoice-paid"
-                               value="0">
+                               min="0"
+                               step="0.01"
+                               value="0"
+                               required>
                     </label>
 
                     <label>
                         Payment Method
-
                         <select name="method">
-
-                            <option>Cash</option>
-
-                            <option>
+                            <option value="Cash">Cash</option>
+                            <option value="UPI (verified offline)">
                                 UPI (verified offline)
                             </option>
-
-                            <option>
+                            <option value="Bank Transfer (verified offline)">
                                 Bank Transfer (verified offline)
                             </option>
-
                         </select>
                     </label>
 
                     <label>
                         Payment Reference
-
                         <input name="reference"
                                maxlength="150"
-                               placeholder="Optional, after verification">
+                               placeholder="After verification">
                     </label>
 
                     <div class="submit-cell">
-
                         <div class="mini-total">
-
-                            Bill Total:
-                            <strong id="sale-total">
-                                ₹0.00
-                            </strong>
-
-                            <div>
-                                Balance Due:
-                                <strong id="invoice-due">
-                                    ₹0.00
-                                </strong>
-                            </div>
-
+                            <p>Bill Total:
+                                <strong id="sale-total">₹0.00</strong>
+                            </p>
+                            <p>Balance Due:
+                                <strong id="invoice-due">₹0.00</strong>
+                            </p>
                         </div>
 
                         <button class="button"
-                                type="submit">
-
+                                type="submit"
+                                id="multi-sale-submit"
+                                disabled>
                             Generate Single Bill
-
                         </button>
-
                     </div>
 
                 </div>
 
+                <p class="muted"
+                   id="multi-sale-validation"
+                   aria-live="polite"
+                   style="margin-top:12px">
+                    Select a product with configured bag weight and price.
+                </p>
+
             </form>
+        </section>
 
-        </div>
-
-
-        <!-- ====================================== -->
         <!-- SALES REGISTER -->
-        <!-- ====================================== -->
-
-        <div class="panel">
+        <section class="panel">
 
             <div class="panel-head">
-
                 <h3>Sales Register</h3>
-
                 <input class="search"
                        data-filter="salesTable"
                        placeholder="Search bills...">
-
             </div>
 
             <div class="table-scroll">
-
                 <table id="salesTable">
 
                     <thead>
-                    <tr>
-                        <th>Bill No.</th>
-                        <th>Date</th>
-                        <th>Customer</th>
-                        <th>Product</th>
-                        <th>Qty</th>
-                        <th>Total</th>
-                        <th>Paid</th>
-                        <th>Due</th>
-                        <th>Status</th>
-                    </tr>
+                        <tr>
+                            <th>Bill No.</th>
+                            <th>Date</th>
+                            <th>Customer</th>
+                            <th>Product</th>
+                            <th>Qty</th>
+                            <th>Total</th>
+                            <th>Paid</th>
+                            <th>Due</th>
+                            <th>Status</th>
+                        </tr>
                     </thead>
 
                     <tbody>
+                        <tr th:each="s : ${invoiceRows}">
+                            <td>
+                                <a th:href="@{/sales/{id}(id=${s.id})}"
+                                   th:text="|INV-${s.id}|">
+                                    Invoice
+                                </a>
+                            </td>
 
-                    <tr th:each="s : ${invoiceRows}">
+                            <td th:text="${#temporals.format(s.createdAt,'dd MMM yyyy')}"></td>
+                            <td th:text="${s.customerName}"></td>
+                            <td th:text="${s.products}"></td>
+                            <td th:text="${s.quantity}"></td>
+                            <td th:text="${s.total}"></td>
+                            <td th:text="${s.paid}"></td>
+                            <td class="warn" th:text="${s.due}"></td>
 
-                        <td>
-                            <a th:href="@{/sales/{id}(id=${s.id})}"
-                               th:text="'INV-'+${s.id}">
-                            </a>
-                        </td>
+                            <td>
+                                <span class="pill"
+                                      th:text="${s.status}">
+                                </span>
+                            </td>
+                        </tr>
 
-                        <td th:text="${#temporals.format(s.createdAt,'dd MMM yyyy')}"></td>
-
-                        <td th:text="${s.customerName}"></td>
-
-                        <td th:text="${s.products}"></td>
-
-                        <td th:text="${s.quantity}"></td>
-
-                        <td th:text="${s.total}"></td>
-
-                        <td th:text="${s.paid}"></td>
-
-                        <td class="warn"
-                            th:text="${s.due}">
-                        </td>
-
-                        <td>
-                            <span class="pill"
-                                  th:text="${s.status}">
-                            </span>
-                        </td>
-
-                    </tr>
-
-                    <tr th:if="${#lists.isEmpty(invoiceRows)}">
-                        <td colspan="9" class="empty">
-                            No bills yet
-                        </td>
-                    </tr>
-
+                        <tr th:if="${#lists.isEmpty(invoiceRows)}">
+                            <td colspan="9" class="empty">
+                                No bills yet
+                            </td>
+                        </tr>
                     </tbody>
 
                 </table>
-
             </div>
 
-        </div>
+            <p class="muted">
+                Weight-based bill quantities are shown in detail
+                inside each invoice. The register Qty column uses
+                the existing legacy quantity field.
+            </p>
+
+        </section>
 
     </main>
-
 </div>
 
-
-<!-- Existing Application JavaScript -->
 <script th:src="@{/js/main.js}"></script>
-
-
-<!-- ====================================== -->
-<!-- NEW WEIGHT BILLING CALCULATOR -->
-<!-- ====================================== -->
-
-<script>
-(function () {
-    "use strict";
-
-    const form = document.getElementById("weight-sale-form");
-
-    const product = document.getElementById("weightProduct");
-    const quantity = document.getElementById("weightQuantity");
-    const unit = document.getElementById("weightUnit");
-    const paid = document.getElementById("weightPaid");
-
-    const total = document.getElementById("weightTotal");
-    const stock = document.getElementById("weightStock");
-    const bagWeightText = document.getElementById("selectedBagWeight");
-    const bagPriceText = document.getElementById("selectedBagPrice");
-    const calculatedWeight = document.getElementById("calculatedWeight");
-    const due = document.getElementById("weightDue");
-
-    const submit = document.getElementById("weightSubmit");
-    const validation = document.getElementById("weightValidation");
-
-    function currency(value) {
-        return "₹" + value.toFixed(2);
-    }
-
-    function calculate() {
-        const option = product.selectedOptions[0];
-
-        const bagPrice = Number(option?.dataset.price);
-        const bagWeight = Number(option?.dataset.weight);
-        const available = Number(option?.dataset.stock);
-
-        const entered = Number(quantity.value);
-        const paidNow = Number(paid.value);
-
-        let kg = entered;
-
-        if (unit.value === "g") {
-            kg = entered / 1000;
-        }
-
-        if (unit.value === "bag") {
-            kg = entered * bagWeight;
-        }
-
-        const validProduct =
-            product.value !== "" &&
-            Number.isFinite(bagWeight) &&
-            bagWeight > 0 &&
-            Number.isFinite(bagPrice) &&
-            bagPrice > 0 &&
-            Number.isFinite(available) &&
-            available >= 0;
-
-        bagWeightText.textContent = validProduct
-            ? bagWeight + " kg"
-            : "Not configured";
-
-        bagPriceText.textContent = validProduct
-            ? currency(bagPrice)
-            : "₹0.00";
-
-        stock.textContent = validProduct
-            ? available.toFixed(3) + " kg"
-            : "—";
-
-        calculatedWeight.textContent =
-            Number.isFinite(kg) && kg > 0
-                ? kg.toFixed(3) + " kg"
-                : "0 kg";
-
-        const amount = validProduct
-            ? Number((kg * bagPrice / bagWeight).toFixed(2))
-            : 0;
-
-        const valid =
-            validProduct &&
-            quantity.value.trim() !== "" &&
-            Number.isFinite(entered) &&
-            entered > 0 &&
-            Number.isFinite(kg) &&
-            kg > 0 &&
-            Math.abs(kg * 1000 -
-                     Math.round(kg * 1000)) < 0.0000001 &&
-            kg <= available &&
-            (unit.value !== "bag" ||
-             Number.isInteger(entered)) &&
-            Number.isFinite(paidNow) &&
-            paidNow >= 0 &&
-            paidNow <= amount &&
-            amount > 0;
-
-        total.textContent = currency(
-            Number.isFinite(amount) && amount >= 0
-                ? amount : 0
-        );
-
-        due.textContent = currency(
-            Number.isFinite(amount) && amount >= paidNow
-                ? amount - paidNow : 0
-        );
-
-        if (!validProduct) {
-            validation.textContent =
-                "Please select a product with a valid bag weight and price.";
-        } else if (!Number.isFinite(kg) || kg <= 0) {
-            validation.textContent =
-                "Enter a valid quantity.";
-        } else if (kg > available) {
-            validation.textContent =
-                "Insufficient stock. Available: " +
-                available.toFixed(3) + " kg";
-        } else if (
-            Math.abs(kg * 1000 -
-                     Math.round(kg * 1000)) >= 0.0000001
-        ) {
-            validation.textContent =
-                "Minimum supported weight increment is 1 gram.";
-        } else if (
-            unit.value === "bag" &&
-            !Number.isInteger(entered)
-        ) {
-            validation.textContent =
-                "Enter a whole number of bags.";
-        } else if (
-            !Number.isFinite(paidNow) ||
-            paidNow < 0 ||
-            paidNow > amount
-        ) {
-            validation.textContent =
-                "Paid amount must be between ₹0 and the bill total.";
-        } else {
-            validation.textContent =
-                "Ready to generate the invoice.";
-        }
-
-        submit.disabled = !valid;
-    }
-
-    product.addEventListener("change", calculate);
-    quantity.addEventListener("input", calculate);
-    unit.addEventListener("change", calculate);
-    paid.addEventListener("input", calculate);
-
-    form.addEventListener("submit", function (event) {
-        calculate();
-
-        if (submit.disabled) {
-            event.preventDefault();
-        }
-    });
-
-    calculate();
-})();
-</script>
 
 </body>
 </html>

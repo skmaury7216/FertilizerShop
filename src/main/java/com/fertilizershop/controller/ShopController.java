@@ -42,13 +42,20 @@ public class ShopController {
         payments = pa;
     }
 
-    private void common(Model model, String active, String title) {
+    private void common(
+            Model model,
+            String active,
+            String title) {
+
         model.addAttribute("active", active);
         model.addAttribute("pageTitle", title);
-        model.addAttribute("shopName", "Maurya Fertilizer Shop");
+        model.addAttribute(
+                "shopName", "Maurya Fertilizer Shop");
     }
 
+    // =====================================
     // HOME AND LOGIN
+    // =====================================
 
     @GetMapping("/")
     String root() {
@@ -60,50 +67,78 @@ public class ShopController {
         return "login";
     }
 
+    // =====================================
     // DASHBOARD
+    // =====================================
 
     @GetMapping("/dashboard")
     String dashboard(Model m) {
+
         common(m, "dashboard", "Dashboard");
 
-        m.addAttribute("products",
+        m.addAttribute(
+                "products",
                 products.findByActiveTrueOrderByNameAsc());
 
-        m.addAttribute("sales",
+        m.addAttribute(
+                "sales",
                 sales.findAllByOrderByCreatedAtDesc()
-                        .stream().limit(6).toList());
+                        .stream()
+                        .limit(6)
+                        .toList());
 
-        m.addAttribute("totalSales", service.totalSales());
-        m.addAttribute("totalPaid", service.totalPaid());
-        m.addAttribute("totalDue", service.totalDue());
-        m.addAttribute("inventoryValue", service.inventoryValue());
-        m.addAttribute("customersCount", customers.count());
+        m.addAttribute(
+                "totalSales", service.totalSales());
+
+        m.addAttribute(
+                "totalPaid", service.totalPaid());
+
+        m.addAttribute(
+                "totalDue", service.totalDue());
+
+        m.addAttribute(
+                "inventoryValue", service.inventoryValue());
+
+        m.addAttribute(
+                "customersCount", customers.count());
 
         return "dashboard";
     }
 
+    // =====================================
     // PRODUCTS
+    // =====================================
 
     @GetMapping("/products")
     String productList(Model m) {
+
         common(m, "products", "Products & Fertilizers");
-        m.addAttribute("products",
+
+        m.addAttribute(
+                "products",
                 products.findByActiveTrueOrderByNameAsc());
+
         return "products";
     }
 
     @GetMapping("/products/new")
     String productNew(Model m) {
+
         common(m, "products", "New Product");
         m.addAttribute("product", new Product());
+
         return "product-form";
     }
 
     @GetMapping("/products/{id}/edit")
-    String productEdit(@PathVariable Long id, Model m) {
+    String productEdit(
+            @PathVariable Long id,
+            Model m) {
+
         common(m, "products", "Edit Product");
 
-        m.addAttribute("product",
+        m.addAttribute(
+                "product",
                 products.findById(id)
                         .orElseThrow(() ->
                                 new IllegalArgumentException(
@@ -127,24 +162,38 @@ public class ShopController {
             @RequestParam(required = false) String description,
             RedirectAttributes a) {
 
-        return go(a, "/products",
+        return go(
+                a,
+                "/products",
                 () -> service.saveProduct(
-                        id, name, brand, category, unit,
-                        barcode, purchasePrice, sellingPrice,
-                        bagWeightKg, reorderLevel, description));
+                        id,
+                        name,
+                        brand,
+                        category,
+                        unit,
+                        barcode,
+                        purchasePrice,
+                        sellingPrice,
+                        bagWeightKg,
+                        reorderLevel,
+                        description));
     }
 
+    // =====================================
     // CUSTOMERS
+    // =====================================
 
     @GetMapping("/customers")
     String customers(Model m) {
+
         common(m, "customers", "Customers");
-        m.addAttribute("customers",
+
+        m.addAttribute(
+                "customers",
                 customers.findAllByOrderByNameAsc());
+
         return "customers";
     }
-
-    // UPDATED: CUSTOMER WITH OPTIONAL AADHAAR LAST 4
 
     @PostMapping("/customers")
     String customerSave(
@@ -167,28 +216,39 @@ public class ShopController {
     }
 
     @GetMapping("/customers/{id}")
-    String customerDetail(@PathVariable Long id, Model m) {
+    String customerDetail(
+            @PathVariable Long id,
+            Model m) {
+
         common(m, "customers", "Customer Details");
 
-        m.addAttribute("customer",
+        m.addAttribute(
+                "customer",
                 customers.findById(id)
                         .orElseThrow(() ->
                                 new IllegalArgumentException(
                                         "Customer not found")));
 
-        m.addAttribute("sales",
+        m.addAttribute(
+                "sales",
                 sales.findByCustomerIdOrderByCreatedAtDesc(id));
 
         return "customer-detail";
     }
 
+    // =====================================
     // SUPPLIERS
+    // =====================================
 
     @GetMapping("/suppliers")
     String suppliers(Model m) {
+
         common(m, "suppliers", "Supplier Management");
-        m.addAttribute("suppliers",
+
+        m.addAttribute(
+                "suppliers",
                 suppliers.findAllByOrderByNameAsc());
+
         return "suppliers";
     }
 
@@ -199,23 +259,34 @@ public class ShopController {
             @RequestParam(required = false) String address,
             RedirectAttributes a) {
 
-        return go(a, "/suppliers",
-                () -> service.saveSupplier(name, phone, address));
+        return go(
+                a,
+                "/suppliers",
+                () -> service.saveSupplier(
+                        name,
+                        phone,
+                        address));
     }
 
-    // STOCK PURCHASE
+    // =====================================
+    // STOCK PURCHASES
+    // =====================================
 
     @GetMapping("/purchases")
     String purchases(Model m) {
+
         common(m, "purchases", "Stock Purchase");
 
-        m.addAttribute("purchases",
+        m.addAttribute(
+                "purchases",
                 purchases.findAllByOrderByPurchasedAtDesc());
 
-        m.addAttribute("products",
+        m.addAttribute(
+                "products",
                 products.findByActiveTrueOrderByNameAsc());
 
-        m.addAttribute("suppliers",
+        m.addAttribute(
+                "suppliers",
                 suppliers.findAllByOrderByNameAsc());
 
         return "purchases";
@@ -230,28 +301,40 @@ public class ShopController {
             @RequestParam(required = false) String reference,
             RedirectAttributes a) {
 
-        return go(a, "/purchases",
+        return go(
+                a,
+                "/purchases",
                 () -> service.purchase(
-                        productId, supplierId, quantity,
-                        unitCost, reference));
+                        productId,
+                        supplierId,
+                        quantity,
+                        unitCost,
+                        reference));
     }
 
+    // =====================================
     // SALES AND BILLING PAGE
+    // =====================================
 
     @GetMapping("/sales")
     String sales(Model m) {
+
         common(m, "sales", "Sales & Bills");
 
-        m.addAttribute("invoiceRows",
+        m.addAttribute(
+                "invoiceRows",
                 service.invoiceSummaries());
 
-        m.addAttribute("products",
+        m.addAttribute(
+                "products",
                 products.findByActiveTrueOrderByNameAsc());
 
         return "sales";
     }
 
-    // EXISTING MULTI-PRODUCT BILL
+    // =====================================
+    // EXISTING MULTI-PRODUCT BAG BILL
+    // =====================================
 
     @PostMapping("/sales")
     String createSale(
@@ -267,6 +350,7 @@ public class ShopController {
             RedirectAttributes a) {
 
         try {
+
             Sale sale = service.sellMultiToNewCustomer(
                     customerName,
                     customerPhone,
@@ -278,18 +362,26 @@ public class ShopController {
                     method,
                     reference);
 
-            a.addFlashAttribute("message",
+            a.addFlashAttribute(
+                    "message",
                     "Invoice created successfully");
 
             return "redirect:/sales/" + sale.id;
 
-        } catch (IllegalArgumentException | ArithmeticException e) {
-            a.addFlashAttribute("error", e.getMessage());
+        } catch (IllegalArgumentException
+                 | ArithmeticException e) {
+
+            a.addFlashAttribute(
+                    "error",
+                    e.getMessage());
+
             return "redirect:/sales";
         }
     }
 
-    // GRAM / KG / BAG BILLING
+    // =====================================
+    // SINGLE-PRODUCT GRAM / KG / BAG
+    // =====================================
 
     @PostMapping("/sales/weight")
     String createWeightSale(
@@ -305,7 +397,9 @@ public class ShopController {
             RedirectAttributes a) {
 
         try {
-            if (quantity == null || quantity.signum() <= 0) {
+
+            if (quantity == null
+                    || quantity.signum() <= 0) {
                 throw new IllegalArgumentException(
                         "Enter a valid fertilizer quantity");
             }
@@ -328,69 +422,153 @@ public class ShopController {
                     method,
                     reference);
 
-            a.addFlashAttribute("message",
+            a.addFlashAttribute(
+                    "message",
                     "Weight-based invoice created successfully");
 
             return "redirect:/sales/" + sale.id;
 
-        } catch (IllegalArgumentException | ArithmeticException e) {
-            a.addFlashAttribute("error", e.getMessage());
+        } catch (IllegalArgumentException
+                 | ArithmeticException e) {
+
+            a.addFlashAttribute(
+                    "error",
+                    e.getMessage());
+
             return "redirect:/sales";
         }
     }
 
+    // =====================================
+    // NEW MULTI-PRODUCT WEIGHT BILL
+    // =====================================
+
+    @PostMapping("/sales/mixed")
+    String createMixedWeightInvoice(
+            @RequestParam String customerName,
+            @RequestParam(required = false) String customerPhone,
+            @RequestParam(required = false) String customerVillage,
+            @RequestParam(required = false) String aadhaarLast4,
+            @RequestParam("productIds") List<Long> productIds,
+            @RequestParam("quantities") List<BigDecimal> quantities,
+            @RequestParam("units") List<String> units,
+            @RequestParam(defaultValue = "0") BigDecimal advance,
+            @RequestParam(defaultValue = "Cash") String method,
+            @RequestParam(required = false) String reference,
+            RedirectAttributes a) {
+
+        try {
+
+            Sale sale = service.sellMixedWeightInvoice(
+                    customerName,
+                    customerPhone,
+                    customerVillage,
+                    aadhaarLast4,
+                    productIds,
+                    quantities,
+                    units,
+                    advance,
+                    method,
+                    reference);
+
+            a.addFlashAttribute(
+                    "message",
+                    "Multi-product invoice created successfully");
+
+            return "redirect:/sales/" + sale.id;
+
+        } catch (IllegalArgumentException
+                 | ArithmeticException e) {
+
+            a.addFlashAttribute(
+                    "error",
+                    e.getMessage());
+
+            return "redirect:/sales";
+        }
+    }
+
+    // =====================================
     // INVOICE DETAILS
+    // =====================================
 
     @GetMapping("/sales/{id}")
-    String invoice(@PathVariable Long id, Model m) {
+    String invoice(
+            @PathVariable Long id,
+            Model m) {
+
         common(m, "sales", "Invoice / Receipt");
 
         Sale sale = sales.findById(id)
                 .orElseThrow(() ->
-                        new IllegalArgumentException("Bill not found"));
+                        new IllegalArgumentException(
+                                "Bill not found"));
 
         List<Sale> items = service.invoiceItems(sale);
 
-        m.addAttribute("sale", items.get(0));
-        m.addAttribute("invoiceItems", items);
+        m.addAttribute(
+                "sale",
+                items.get(0));
+
+        m.addAttribute(
+                "invoiceItems",
+                items);
 
         BigDecimal invoiceTotal = items.stream()
                 .map(x -> x.total)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+                .reduce(
+                        BigDecimal.ZERO,
+                        BigDecimal::add);
 
         BigDecimal invoicePaid = items.stream()
                 .map(x -> x.paid)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+                .reduce(
+                        BigDecimal.ZERO,
+                        BigDecimal::add);
 
-        m.addAttribute("invoiceTotal", invoiceTotal);
-        m.addAttribute("invoicePaid", invoicePaid);
+        m.addAttribute(
+                "invoiceTotal",
+                invoiceTotal);
 
-        m.addAttribute("invoiceDue",
+        m.addAttribute(
+                "invoicePaid",
+                invoicePaid);
+
+        m.addAttribute(
+                "invoiceDue",
                 invoiceTotal.subtract(invoicePaid));
 
-        m.addAttribute("invoiceStatus",
+        m.addAttribute(
+                "invoiceStatus",
                 invoiceTotal.compareTo(invoicePaid) == 0
                         ? "Paid"
                         : invoicePaid.signum() == 0
-                                ? "Unpaid" : "Partial");
+                            ? "Unpaid"
+                            : "Partial");
 
         List<Payment> history = new ArrayList<>();
 
         for (Sale line : items) {
             history.addAll(
-                    payments.findBySaleIdOrderByPaidAtDesc(line.id));
+                    payments.findBySaleIdOrderByPaidAtDesc(
+                            line.id));
         }
 
         history.sort(
                 Comparator.comparing(
-                        (Payment x) -> x.paidAt).reversed());
+                        (Payment x) -> x.paidAt)
+                        .reversed());
 
-        m.addAttribute("payments", history);
+        m.addAttribute(
+                "payments",
+                history);
 
         return "invoice";
     }
 
+    // =====================================
     // INVOICE PAYMENTS
+    // =====================================
 
     @PostMapping("/sales/{id}/payments")
     String pay(
@@ -400,49 +578,79 @@ public class ShopController {
             @RequestParam(required = false) String reference,
             RedirectAttributes a) {
 
-        return go(a, "/sales/" + id,
+        return go(
+                a,
+                "/sales/" + id,
                 () -> service.payInvoice(
-                        id, amount, method, reference));
+                        id,
+                        amount,
+                        method,
+                        reference));
     }
 
+    // =====================================
     // PAYMENTS AND DUES
+    // =====================================
 
     @GetMapping("/payments")
     String payments(Model m) {
+
         common(m, "payments", "Payments & Dues");
 
-        m.addAttribute("sales",
+        m.addAttribute(
+                "sales",
                 sales.findAllByOrderByCreatedAtDesc());
 
-        m.addAttribute("payments",
+        m.addAttribute(
+                "payments",
                 payments.findAllByOrderByPaidAtDesc());
 
-        m.addAttribute("totalDue", service.totalDue());
+        m.addAttribute(
+                "totalDue",
+                service.totalDue());
 
         return "payments";
     }
 
+    // =====================================
     // REPORTS
+    // =====================================
 
     @GetMapping("/reports")
     String reports(Model m) {
+
         common(m, "reports", "Business Reports");
 
-        m.addAttribute("totalSales", service.totalSales());
-        m.addAttribute("totalPaid", service.totalPaid());
-        m.addAttribute("totalDue", service.totalDue());
-        m.addAttribute("inventoryValue", service.inventoryValue());
+        m.addAttribute(
+                "totalSales",
+                service.totalSales());
 
-        m.addAttribute("sales",
+        m.addAttribute(
+                "totalPaid",
+                service.totalPaid());
+
+        m.addAttribute(
+                "totalDue",
+                service.totalDue());
+
+        m.addAttribute(
+                "inventoryValue",
+                service.inventoryValue());
+
+        m.addAttribute(
+                "sales",
                 sales.findAllByOrderByCreatedAtDesc());
 
-        m.addAttribute("products",
+        m.addAttribute(
+                "products",
                 products.findByActiveTrueOrderByNameAsc());
 
         return "reports";
     }
 
-    // COMMON SAVE AND ERROR HANDLING
+    // =====================================
+    // COMMON SAVE / ERROR HANDLING
+    // =====================================
 
     private String go(
             RedirectAttributes attrs,
@@ -451,11 +659,17 @@ public class ShopController {
 
         try {
             action.run();
-            attrs.addFlashAttribute(
-                    "message", "Saved successfully");
 
-        } catch (IllegalArgumentException | ArithmeticException e) {
-            attrs.addFlashAttribute("error", e.getMessage());
+            attrs.addFlashAttribute(
+                    "message",
+                    "Saved successfully");
+
+        } catch (IllegalArgumentException
+                 | ArithmeticException e) {
+
+            attrs.addFlashAttribute(
+                    "error",
+                    e.getMessage());
         }
 
         return "redirect:" + path;

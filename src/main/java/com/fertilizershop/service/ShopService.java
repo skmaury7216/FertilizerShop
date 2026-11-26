@@ -29,7 +29,6 @@ public class ShopService {
             SaleRepository sa,
             StockPurchaseRepository pu,
             PaymentRepository pa) {
-
         products = p;
         customers = c;
         suppliers = s;
@@ -37,6 +36,10 @@ public class ShopService {
         purchases = pu;
         payments = pa;
     }
+
+    // =====================================
+    // VALIDATION HELPERS
+    // =====================================
 
     public BigDecimal money(BigDecimal n) {
         if (n == null) {
@@ -66,23 +69,40 @@ public class ShopService {
         }
     }
 
+    private void validateCustomer(
+            String name, String phone, String village) {
+        if (name == null || name.isBlank()
+                || name.trim().length() > 120) {
+            throw new IllegalArgumentException(
+                    "Enter a valid customer name");
+        }
+        if (phone != null && phone.length() > 20) {
+            throw new IllegalArgumentException(
+                    "Mobile number is too long");
+        }
+        if (village != null && village.length() > 200) {
+            throw new IllegalArgumentException(
+                    "Village or address is too long");
+        }
+    }
+
     // =====================================
     // PRODUCT MANAGEMENT
     // =====================================
 
     @Transactional
-public Product saveProduct(
-        Long id,
-        String name,
-        String brand,
-        String category,
-        String unit,
-        String barcode,
-        BigDecimal buy,
-        BigDecimal sell,
-        BigDecimal bagWeightKg,
-        Integer reorder,
-        String desc) {
+    public Product saveProduct(
+            Long id,
+            String name,
+            String brand,
+            String category,
+            String unit,
+            String barcode,
+            BigDecimal buy,
+            BigDecimal sell,
+            BigDecimal bagWeightKg,
+            Integer reorder,
+            String desc) {
 
         if (name == null || name.isBlank()) {
             throw new IllegalArgumentException(
@@ -98,21 +118,18 @@ public Product saveProduct(
         String cleanBarcode = barcode == null
                 ? null : barcode.trim();
 
-        if (cleanBarcode != null
-                && cleanBarcode.isEmpty()) {
+        if (cleanBarcode != null && cleanBarcode.isEmpty()) {
             cleanBarcode = null;
         }
 
         if (cleanBarcode != null) {
             if (cleanBarcode.length() > 80
-                    || !cleanBarcode.matches(
-                            "[A-Za-z0-9._-]+")) {
+                    || !cleanBarcode.matches("[A-Za-z0-9._-]+")) {
                 throw new IllegalArgumentException(
                         "Invalid product barcode");
             }
 
-            var duplicate = products.findByBarcode(
-                    cleanBarcode);
+            var duplicate = products.findByBarcode(cleanBarcode);
 
             if (duplicate.isPresent()
                     && !duplicate.get().id.equals(p.id)) {
@@ -121,25 +138,40 @@ public Product saveProduct(
             }
         }
 
+        positive(bagWeightKg, "Bag weight");
+
+        BigDecimal weight;
+        try {
+            weight = bagWeightKg.setScale(
+                    3, RoundingMode.UNNECESSARY);
+        } catch (ArithmeticException ex) {
+            throw new IllegalArgumentException(
+                    "Bag weight supports up to 3 decimal places");
+        }
+
+        BigDecimal purchasePrice = money(buy);
+        BigDecimal sellingPrice = money(sell);
+
+        nonnegative(purchasePrice, "Purchase price");
+        nonnegative(sellingPrice, "Selling price");
+
+        if (p.bagWeightKg != null
+                && p.bagWeightKg.compareTo(weight) != 0
+                && (p.stock != null && p.stock > 0
+                    || p.looseStockKg != null
+                    && p.looseStockKg.signum() > 0)) {
+            throw new IllegalArgumentException(
+                    "Cannot change bag weight while stock exists");
+        }
+
         p.barcode = cleanBarcode;
         p.name = name.trim();
         p.brand = brand;
         p.category = category;
         p.unit = unit;
-
-        p.purchasePrice = money(buy);
-        p.sellingPrice = money(sell);
-        if (bagWeightKg == null || bagWeightKg.signum() <= 0) {
-    throw new IllegalArgumentException(
-            "Bag weight must be greater than zero");
-}
-
-p.bagWeightKg = bagWeightKg.setScale(
-        3, RoundingMode.UNNECESSARY);
-
-        nonnegative(p.purchasePrice, "Purchase price");
-        nonnegative(p.sellingPrice, "Selling price");
-
+        p.purchasePrice = purchasePrice;
+        p.sellingPrice = sellingPrice;
+        p.bagWeightKg = weight;
         p.reorderLevel = reorder == null ? 10 : reorder;
 
         if (p.reorderLevel < 0) {
@@ -148,10 +180,14 @@ p.bagWeightKg = bagWeightKg.setScale(
         }
 
         p.description = desc;
+
+        if (p.looseStockKg == null) {
+            p.looseStockKg = BigDecimal.ZERO;
+        }
+
         return products.save(p);
     }
 
-    
     // =====================================
     // CUSTOMER MANAGEMENT
     // =====================================
@@ -164,34 +200,11 @@ p.bagWeightKg = bagWeightKg.setScale(
             String address,
             String aadhaarLast4) {
 
-        if (name == null || name.isBlank()) {
-            throw new IllegalArgumentException(
-                    "Customer name required");
-        }
-
-        String cleanName = name.trim();
-
-        if (cleanName.length() > 120) {
-            throw new IllegalArgumentException(
-                    "Customer name is too long");
-        }
-
-        if (phone != null && phone.length() > 20) {
-            throw new IllegalArgumentException(
-                    "Mobile number is too long");
-        }
-
-        if (village != null && village.length() > 200) {
-            throw new IllegalArgumentException(
-                    "Village name is too long");
-        }
+        validateCustomer(name, phone, village);
 
         String last4 = aadhaarLast4 == null
-                ? ""
-                : aadhaarLast4.trim();
+                ? "" : aadhaarLast4.trim();
 
-        // Aadhaar is optional.
-        // Never store the complete Aadhaar number.
         if (!last4.isEmpty()
                 && !last4.matches("[0-9]{4}")) {
             throw new IllegalArgumentException(
@@ -199,34 +212,25 @@ p.bagWeightKg = bagWeightKg.setScale(
         }
 
         Customer c = new Customer();
-
-        c.name = cleanName;
+        c.name = name.trim();
         c.phone = phone;
         c.village = village;
         c.address = address;
-
-        // Save only the final four digits.
-        c.aadhaarLast4 = last4.isEmpty()
-                ? null
-                : last4;
+        c.aadhaarLast4 =
+                last4.isEmpty() ? null : last4;
 
         return customers.save(c);
     }
 
-    // Compatibility with existing sales and billing.
+    // Keep old callers compatible.
     @Transactional
     public Customer saveCustomer(
             String name,
             String phone,
             String village,
             String address) {
-
         return saveCustomer(
-                name,
-                phone,
-                village,
-                address,
-                null);
+                name, phone, village, address, null);
     }
 
     // =====================================
@@ -235,9 +239,7 @@ p.bagWeightKg = bagWeightKg.setScale(
 
     @Transactional
     public Supplier saveSupplier(
-            String name,
-            String phone,
-            String address) {
+            String name, String phone, String address) {
 
         if (name == null || name.isBlank()) {
             throw new IllegalArgumentException(
@@ -245,7 +247,6 @@ p.bagWeightKg = bagWeightKg.setScale(
         }
 
         Supplier s = new Supplier();
-
         s.name = name.trim();
         s.phone = phone;
         s.address = address;
@@ -280,24 +281,19 @@ p.bagWeightKg = bagWeightKg.setScale(
                                 "Supplier not found"));
 
         BigDecimal cost = money(unitCost);
-
         nonnegative(cost, "Cost");
 
         p.stock = Math.addExact(p.stock, quantity);
         p.purchasePrice = cost;
-
         products.save(p);
 
         StockPurchase v = new StockPurchase();
-
         v.product = p;
         v.supplier = supplier;
         v.quantity = quantity;
         v.unitCost = cost;
-
         v.totalCost = cost.multiply(
                 BigDecimal.valueOf(quantity));
-
         v.reference = reference;
         v.purchasedAt = LocalDateTime.now();
 
@@ -305,7 +301,7 @@ p.bagWeightKg = bagWeightKg.setScale(
     }
 
     // =====================================
-    // EXISTING SINGLE PRODUCT SALE
+    // LEGACY SINGLE PRODUCT SALE
     // =====================================
 
     @Transactional
@@ -335,9 +331,9 @@ p.bagWeightKg = bagWeightKg.setScale(
                     "Product inactive");
         }
 
-        if (p.stock < quantity) {
+        if (p.stock == null || p.stock < quantity) {
             throw new IllegalArgumentException(
-                    "Stock insufficient: available " + p.stock);
+                    "Stock insufficient");
         }
 
         BigDecimal price = money(unitPrice);
@@ -351,14 +347,17 @@ p.bagWeightKg = bagWeightKg.setScale(
 
         if (paid.compareTo(total) > 0) {
             throw new IllegalArgumentException(
-                    "Paid amount exceeds the bill total");
+                    "Paid amount exceeds bill total");
+        }
+
+        if (paid.signum() > 0) {
+            validatePaymentMethod(method);
         }
 
         p.stock -= quantity;
         products.save(p);
 
         Sale sale = new Sale();
-
         sale.product = p;
         sale.customer = c;
         sale.quantity = quantity;
@@ -367,7 +366,7 @@ p.bagWeightKg = bagWeightKg.setScale(
         sale.paid = paid;
         sale.createdAt = LocalDateTime.now();
 
-        sales.save(sale);
+        sale = sales.save(sale);
 
         if (paid.signum() > 0) {
             savePayment(sale, paid, method, reference);
@@ -377,7 +376,7 @@ p.bagWeightKg = bagWeightKg.setScale(
     }
 
     // =====================================
-    // SALE TO NEW CUSTOMER
+    // LEGACY SALE TO NEW CUSTOMER
     // =====================================
 
     @Transactional
@@ -392,28 +391,8 @@ p.bagWeightKg = bagWeightKg.setScale(
             String method,
             String reference) {
 
-        if (customerName == null
-                || customerName.isBlank()) {
-            throw new IllegalArgumentException(
-                    "Enter the new customer name");
-        }
-
-        if (customerName.trim().length() > 120) {
-            throw new IllegalArgumentException(
-                    "Customer name is too long");
-        }
-
-        if (customerPhone != null
-                && customerPhone.length() > 20) {
-            throw new IllegalArgumentException(
-                    "Mobile number is too long");
-        }
-
-        if (customerVillage != null
-                && customerVillage.length() > 200) {
-            throw new IllegalArgumentException(
-                    "Village or address is too long");
-        }
+        validateCustomer(
+                customerName, customerPhone, customerVillage);
 
         qty(quantity);
 
@@ -422,14 +401,9 @@ p.bagWeightKg = bagWeightKg.setScale(
                         new IllegalArgumentException(
                                 "Product not found"));
 
-        if (!p.active) {
+        if (!p.active || p.stock < quantity) {
             throw new IllegalArgumentException(
-                    "Product inactive");
-        }
-
-        if (p.stock < quantity) {
-            throw new IllegalArgumentException(
-                    "Stock insufficient: available " + p.stock);
+                    "Insufficient product stock");
         }
 
         BigDecimal price = money(unitPrice);
@@ -438,11 +412,12 @@ p.bagWeightKg = bagWeightKg.setScale(
         positive(price, "Selling price");
         nonnegative(paid, "Advance");
 
-        if (paid.compareTo(
-                price.multiply(
-                        BigDecimal.valueOf(quantity))) > 0) {
+        BigDecimal total = price.multiply(
+                BigDecimal.valueOf(quantity));
+
+        if (paid.compareTo(total) > 0) {
             throw new IllegalArgumentException(
-                    "Paid amount exceeds the bill total");
+                    "Paid amount exceeds bill total");
         }
 
         if (paid.signum() > 0) {
@@ -456,17 +431,12 @@ p.bagWeightKg = bagWeightKg.setScale(
                 "");
 
         return sell(
-                productId,
-                c.id,
-                quantity,
-                price,
-                paid,
-                method,
-                reference);
+                productId, c.id, quantity,
+                price, paid, method, reference);
     }
 
     // =====================================
-    // EXISTING MULTI-PRODUCT BILLING
+    // LEGACY MULTI-PRODUCT BAG SALE
     // =====================================
 
     @Transactional
@@ -481,30 +451,15 @@ p.bagWeightKg = bagWeightKg.setScale(
             String method,
             String reference) {
 
-        if (name == null
-                || name.isBlank()
-                || name.trim().length() > 120) {
-            throw new IllegalArgumentException(
-                    "Enter a valid customer name (up to 120 characters)");
-        }
-
-        if (phone != null && phone.length() > 20) {
-            throw new IllegalArgumentException(
-                    "Mobile number is too long");
-        }
-
-        if (village != null && village.length() > 200) {
-            throw new IllegalArgumentException(
-                    "Village or address is too long");
-        }
+        validateCustomer(name, phone, village);
 
         if (productIds == null
                 || quantities == null
                 || unitPrices == null
                 || productIds.isEmpty()
+                || productIds.size() > 50
                 || productIds.size() != quantities.size()
-                || productIds.size() != unitPrices.size()
-                || productIds.size() > 50) {
+                || productIds.size() != unitPrices.size()) {
             throw new IllegalArgumentException(
                     "Enter 1 to 50 complete product rows");
         }
@@ -521,26 +476,24 @@ p.bagWeightKg = bagWeightKg.setScale(
         BigDecimal grandTotal = BigDecimal.ZERO;
 
         for (int i = 0; i < productIds.size(); i++) {
-
             qty(quantities.get(i));
 
-            Product product = products
-                    .findById(productIds.get(i))
+            Product p = products.findById(productIds.get(i))
                     .orElseThrow(() ->
-                            new IllegalArgumentException(
-                                    "Product not found"));
+                        new IllegalArgumentException(
+                                "Product not found"));
 
-            if (!product.active
-                    || product.stock < quantities.get(i)) {
+            if (!p.active
+                    || p.stock == null
+                    || p.stock < quantities.get(i)) {
                 throw new IllegalArgumentException(
-                        "Insufficient stock for " + product.name);
+                        "Insufficient stock for " + p.name);
             }
 
             BigDecimal price = money(unitPrices.get(i));
-
             positive(price, "Selling price");
 
-            selected.add(product);
+            selected.add(p);
             prices.add(price);
 
             grandTotal = grandTotal.add(
@@ -550,12 +503,11 @@ p.bagWeightKg = bagWeightKg.setScale(
         }
 
         BigDecimal remainingPayment = money(advance);
-
         nonnegative(remainingPayment, "Paid amount");
 
         if (remainingPayment.compareTo(grandTotal) > 0) {
             throw new IllegalArgumentException(
-                    "Paid amount exceeds the invoice total");
+                    "Paid amount exceeds invoice total");
         }
 
         if (remainingPayment.signum() > 0) {
@@ -571,12 +523,11 @@ p.bagWeightKg = bagWeightKg.setScale(
         LocalDateTime now = LocalDateTime.now();
 
         for (int i = 0; i < selected.size(); i++) {
-
             Product p = selected.get(i);
             int amount = quantities.get(i);
 
-            BigDecimal lineTotal = prices.get(i)
-                    .multiply(BigDecimal.valueOf(amount));
+            BigDecimal lineTotal = prices.get(i).multiply(
+                    BigDecimal.valueOf(amount));
 
             BigDecimal linePaid =
                     remainingPayment.min(lineTotal);
@@ -588,7 +539,6 @@ p.bagWeightKg = bagWeightKg.setScale(
             products.save(p);
 
             Sale row = new Sale();
-
             row.product = p;
             row.customer = customer;
             row.quantity = amount;
@@ -614,7 +564,138 @@ p.bagWeightKg = bagWeightKg.setScale(
     }
 
     // =====================================
-    // NEW: SELL BY GRAM, KG OR BAG
+    // WEIGHT BILLING HELPERS
+    // =====================================
+
+    private BigDecimal toKilograms(
+            BigDecimal quantity,
+            String unit,
+            BigDecimal bagWeightKg) {
+
+        positive(quantity, "Quantity");
+        positive(bagWeightKg, "Bag weight");
+
+        BigDecimal kg;
+
+        if ("g".equals(unit)) {
+            kg = quantity.movePointLeft(3);
+
+        } else if ("kg".equals(unit)) {
+            kg = quantity;
+
+        } else if ("bag".equals(unit)) {
+            if (quantity.stripTrailingZeros().scale() > 0) {
+                throw new IllegalArgumentException(
+                        "Bag quantity must be a whole number");
+            }
+
+            kg = quantity.multiply(bagWeightKg);
+
+        } else {
+            throw new IllegalArgumentException(
+                    "Select Gram, Kilogram or Bag");
+        }
+
+        try {
+            kg = kg.setScale(
+                    3, RoundingMode.UNNECESSARY);
+        } catch (ArithmeticException ex) {
+            throw new IllegalArgumentException(
+                    "Minimum supported weight is 1 gram");
+        }
+
+        positive(kg, "Weight");
+        return kg;
+    }
+
+    private BigDecimal availableKg(Product p) {
+        if (p.bagWeightKg == null
+                || p.bagWeightKg.signum() <= 0) {
+            throw new IllegalArgumentException(
+                    "Set bag weight for " + p.name);
+        }
+
+        BigDecimal loose = p.looseStockKg == null
+                ? BigDecimal.ZERO : p.looseStockKg;
+
+        if (p.stock == null || p.stock < 0
+                || loose.signum() < 0
+                || loose.compareTo(p.bagWeightKg) >= 0) {
+            throw new IllegalArgumentException(
+                    "Invalid stock configuration for "
+                            + p.name);
+        }
+
+        return p.bagWeightKg.multiply(
+                BigDecimal.valueOf(p.stock)).add(loose);
+    }
+
+    private BigDecimal weightPrice(
+            Product p, BigDecimal kg) {
+
+        if (p.sellingPrice == null
+                || p.sellingPrice.signum() <= 0) {
+            throw new IllegalArgumentException(
+                    "Set selling price for " + p.name);
+        }
+
+        BigDecimal result = p.sellingPrice
+                .multiply(kg)
+                .divide(
+                        p.bagWeightKg,
+                        2,
+                        RoundingMode.HALF_UP);
+
+        positive(result, "Calculated bill amount");
+        return result;
+    }
+
+    private void deductWeight(
+            Product p, BigDecimal kg) {
+
+        BigDecimal available = availableKg(p);
+
+        if (kg.compareTo(available) > 0) {
+            throw new IllegalArgumentException(
+                    "Insufficient stock for " + p.name
+                    + ". Available: " + available + " kg");
+        }
+
+        BigDecimal loose = p.looseStockKg == null
+                ? BigDecimal.ZERO : p.looseStockKg;
+
+        BigDecimal remainingLoose = loose.subtract(kg);
+
+        if (remainingLoose.signum() >= 0) {
+            p.looseStockKg = remainingLoose;
+
+        } else {
+            BigDecimal needed = remainingLoose.negate();
+
+            int bagsToOpen = needed.divide(
+                    p.bagWeightKg,
+                    0,
+                    RoundingMode.CEILING
+            ).intValueExact();
+
+            if (bagsToOpen > p.stock) {
+                throw new IllegalArgumentException(
+                        "Insufficient bags for " + p.name);
+            }
+
+            p.stock -= bagsToOpen;
+
+            p.looseStockKg = p.bagWeightKg
+                    .multiply(
+                            BigDecimal.valueOf(bagsToOpen))
+                    .subtract(needed);
+        }
+
+        products.save(p);
+    }
+
+    // =====================================
+    // SINGLE PRODUCT GRAM / KG / BAG SALE
     // =====================================
 
     @Transactional
@@ -629,111 +710,32 @@ p.bagWeightKg = bagWeightKg.setScale(
             String method,
             String reference) {
 
-        if (customerName == null
-                || customerName.isBlank()
-                || customerName.trim().length() > 120) {
-            throw new IllegalArgumentException(
-                    "Enter a valid customer name");
-        }
-
-        if (customerPhone != null
-                && customerPhone.length() > 20) {
-            throw new IllegalArgumentException(
-                    "Mobile number is too long");
-        }
-
-        if (customerVillage != null
-                && customerVillage.length() > 200) {
-            throw new IllegalArgumentException(
-                    "Village or address is too long");
-        }
-
-        positive(quantity, "Quantity");
+        validateCustomer(
+                customerName,
+                customerPhone,
+                customerVillage);
 
         Product p = products.findById(productId)
                 .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "Product not found"));
+                    new IllegalArgumentException(
+                            "Product not found"));
 
         if (!p.active) {
             throw new IllegalArgumentException(
                     "Product inactive");
         }
 
-        if (p.bagWeightKg == null
-                || p.bagWeightKg.signum() <= 0) {
+        BigDecimal kg = toKilograms(
+                quantity, unit, p.bagWeightKg);
+
+        if (kg.compareTo(availableKg(p)) > 0) {
             throw new IllegalArgumentException(
-                    "Set bag weight for " + p.name);
+                    "Insufficient stock for " + p.name);
         }
 
-        // Convert entered quantity to kilograms.
-        BigDecimal weightKg;
-
-        if ("g".equals(unit)) {
-            weightKg = quantity.movePointLeft(3);
-        } else if ("kg".equals(unit)) {
-            weightKg = quantity;
-        } else if ("bag".equals(unit)) {
-            if (quantity.stripTrailingZeros().scale() > 0) {
-                throw new IllegalArgumentException(
-                        "Bag quantity must be a whole number");
-            }
-            weightKg = quantity.multiply(p.bagWeightKg);
-        } else {
-            throw new IllegalArgumentException(
-                    "Select Gram, Kilogram or Bag");
-        }
-
-        try {
-            weightKg = weightKg.setScale(
-                    3, RoundingMode.UNNECESSARY);
-        } catch (ArithmeticException ex) {
-            throw new IllegalArgumentException(
-                    "Minimum supported weight is 1 gram");
-        }
-
-        positive(weightKg, "Weight");
-
-        // Keep only complete, unopened bags in stock.
-        // Opened bags are represented in looseStockKg.
-        BigDecimal loose = p.looseStockKg == null
-                ? BigDecimal.ZERO
-                : p.looseStockKg;
-
-        if (p.stock == null || p.stock < 0
-                || loose.signum() < 0
-                || loose.compareTo(p.bagWeightKg) >= 0) {
-            throw new IllegalArgumentException(
-                    "Invalid fertilizer stock configuration");
-        }
-
-        BigDecimal availableKg =
-                p.bagWeightKg.multiply(
-                        BigDecimal.valueOf(p.stock))
-                        .add(loose);
-
-        if (weightKg.compareTo(availableKg) > 0) {
-            throw new IllegalArgumentException(
-                    "Insufficient stock. Available "
-                            + availableKg.stripTrailingZeros()
-                            .toPlainString() + " kg");
-        }
-
-        if (p.sellingPrice == null
-                || p.sellingPrice.signum() <= 0) {
-            throw new IllegalArgumentException(
-                    "Set a valid selling price for " + p.name);
-        }
-
-        // Calculate amount using one full bag price.
-        BigDecimal total = p.sellingPrice
-                .multiply(weightKg)
-                .divide(
-                        p.bagWeightKg,
-                        2,
-                        RoundingMode.HALF_UP);
-
+        BigDecimal total = weightPrice(p, kg);
         BigDecimal paid = money(advance);
+
         nonnegative(paid, "Paid amount");
 
         if (paid.compareTo(total) > 0) {
@@ -745,55 +747,24 @@ p.bagWeightKg = bagWeightKg.setScale(
             validatePaymentMethod(method);
         }
 
-        BigDecimal remainingLoose =
-                loose.subtract(weightKg);
-
-        if (remainingLoose.signum() >= 0) {
-            p.looseStockKg = remainingLoose;
-        } else {
-            BigDecimal needed = remainingLoose.negate();
-
-            int bagsToOpen = needed.divide(
-                    p.bagWeightKg,
-                    0,
-                    RoundingMode.CEILING).intValueExact();
-
-            if (bagsToOpen > p.stock) {
-                throw new IllegalArgumentException(
-                        "Insufficient bags");
-            }
-
-            p.stock -= bagsToOpen;
-
-            p.looseStockKg = p.bagWeightKg
-                    .multiply(BigDecimal.valueOf(bagsToOpen))
-                    .subtract(needed);
-        }
-
         Customer customer = saveCustomer(
                 customerName,
                 customerPhone,
                 customerVillage,
                 "");
 
-        products.save(p);
+        deductWeight(p, kg);
 
         Sale sale = new Sale();
-
         sale.product = p;
         sale.customer = customer;
+        sale.quantity = "bag".equals(unit)
+                ? quantity.intValueExact() : 1;
 
-        // Existing reports require an integer quantity.
-        // Actual weight is saved separately.
-        sale.quantity = 1;
-
-        sale.weightKg = weightKg;
+        sale.weightKg = kg;
         sale.weightUnit = unit;
-
         sale.pricePerKg = p.sellingPrice.divide(
-                p.bagWeightKg,
-                2,
-                RoundingMode.HALF_UP);
+                p.bagWeightKg, 2, RoundingMode.HALF_UP);
 
         sale.unitPrice = total;
         sale.total = total;
@@ -803,11 +774,164 @@ p.bagWeightKg = bagWeightKg.setScale(
         sale = sales.save(sale);
 
         if (paid.signum() > 0) {
-            savePayment(
-                    sale, paid, method, reference);
+            savePayment(sale, paid, method, reference);
         }
 
         return sale;
+    }
+
+    // =====================================
+    // NEW MULTI-PRODUCT WEIGHT BILLING
+    // =====================================
+
+    @Transactional
+    public Sale sellMixedWeightInvoice(
+            String customerName,
+            String customerPhone,
+            String customerVillage,
+            String aadhaarLast4,
+            List<Long> productIds,
+            List<BigDecimal> quantities,
+            List<String> units,
+            BigDecimal advance,
+            String method,
+            String reference) {
+
+        validateCustomer(
+                customerName,
+                customerPhone,
+                customerVillage);
+
+        if (productIds == null
+                || quantities == null
+                || units == null
+                || productIds.isEmpty()
+                || productIds.size() > 50
+                || productIds.size() != quantities.size()
+                || productIds.size() != units.size()) {
+            throw new IllegalArgumentException(
+                    "Enter 1 to 50 valid product rows");
+        }
+
+        if (new HashSet<>(productIds).size()
+                != productIds.size()) {
+            throw new IllegalArgumentException(
+                    "Select each product only once");
+        }
+
+        List<Product> selected = new ArrayList<>();
+        List<BigDecimal> weights = new ArrayList<>();
+        List<BigDecimal> totals = new ArrayList<>();
+
+        BigDecimal grandTotal = BigDecimal.ZERO;
+
+        // First validate every product and its stock.
+        for (int i = 0; i < productIds.size(); i++) {
+
+            Product p = products.findById(productIds.get(i))
+                    .orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "Product not found"));
+
+            if (!p.active) {
+                throw new IllegalArgumentException(
+                        "Inactive product: " + p.name);
+            }
+
+            BigDecimal kg = toKilograms(
+                    quantities.get(i),
+                    units.get(i),
+                    p.bagWeightKg);
+
+            if (kg.compareTo(availableKg(p)) > 0) {
+                throw new IllegalArgumentException(
+                        "Insufficient stock for " + p.name);
+            }
+
+            BigDecimal lineTotal = weightPrice(p, kg);
+
+            selected.add(p);
+            weights.add(kg);
+            totals.add(lineTotal);
+
+            grandTotal = grandTotal.add(lineTotal);
+        }
+
+        BigDecimal paid = money(advance);
+        nonnegative(paid, "Paid amount");
+
+        if (paid.compareTo(grandTotal) > 0) {
+            throw new IllegalArgumentException(
+                    "Paid amount exceeds invoice total");
+        }
+
+        if (paid.signum() > 0) {
+            validatePaymentMethod(method);
+        }
+
+        // Create the customer only after validation.
+        Customer customer = saveCustomer(
+                customerName,
+                customerPhone,
+                customerVillage,
+                "",
+                aadhaarLast4);
+
+        String groupId = UUID.randomUUID().toString();
+
+        LocalDateTime now = LocalDateTime.now();
+        BigDecimal remainingPaid = paid;
+
+        Sale firstSale = null;
+
+        for (int i = 0; i < selected.size(); i++) {
+
+            Product p = selected.get(i);
+            BigDecimal kg = weights.get(i);
+            BigDecimal lineTotal = totals.get(i);
+            String unit = units.get(i);
+
+            deductWeight(p, kg);
+
+            BigDecimal linePaid =
+                    remainingPaid.min(lineTotal);
+
+            remainingPaid =
+                    remainingPaid.subtract(linePaid);
+
+            Sale sale = new Sale();
+            sale.product = p;
+            sale.customer = customer;
+
+            sale.quantity = "bag".equals(unit)
+                    ? quantities.get(i).intValueExact()
+                    : 1;
+
+            sale.weightKg = kg;
+            sale.weightUnit = unit;
+
+            sale.pricePerKg = p.sellingPrice.divide(
+                    p.bagWeightKg, 2, RoundingMode.HALF_UP);
+
+            sale.unitPrice = lineTotal;
+            sale.total = lineTotal;
+            sale.paid = linePaid;
+            sale.createdAt = now;
+            sale.billGroup = groupId;
+
+            sale = sales.save(sale);
+
+            if (linePaid.signum() > 0) {
+                savePayment(
+                        sale, linePaid, method, reference);
+            }
+
+            if (firstSale == null) {
+                firstSale = sale;
+            }
+        }
+
+        return firstSale;
     }
 
     // =====================================
@@ -830,8 +954,8 @@ p.bagWeightKg = bagWeightKg.setScale(
 
         Sale anchor = sales.findById(anchorId)
                 .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "Bill not found"));
+                    new IllegalArgumentException(
+                            "Bill not found"));
 
         List<Sale> lines = invoiceItems(anchor);
 
@@ -869,17 +993,17 @@ p.bagWeightKg = bagWeightKg.setScale(
     // =====================================
 
     private void validatePaymentMethod(String method) {
+
         if (!("Cash".equals(method)
                 || "UPI (verified offline)".equals(method)
                 || "Bank Transfer (verified offline)".equals(method))) {
-
             throw new IllegalArgumentException(
                     "Invalid payment method");
         }
     }
 
     // =====================================
-    // INVOICE SUMMARY
+    // SALES REGISTER SUMMARY
     // =====================================
 
     public static class InvoiceSummary {
@@ -922,8 +1046,8 @@ p.bagWeightKg = bagWeightKg.setScale(
 
             this.status = due.signum() == 0
                     ? "Paid"
-                    : (paid.signum() == 0
-                            ? "Unpaid" : "Partial");
+                    : paid.signum() == 0
+                        ? "Unpaid" : "Partial";
         }
 
         public Long getId() { return id; }
@@ -1003,8 +1127,8 @@ p.bagWeightKg = bagWeightKg.setScale(
 
         Sale s = sales.findById(saleId)
                 .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "Sale not found"));
+                    new IllegalArgumentException(
+                            "Sale not found"));
 
         BigDecimal a = money(amount);
         positive(a, "Payment amount");
@@ -1014,11 +1138,12 @@ p.bagWeightKg = bagWeightKg.setScale(
                     "Payment exceeds outstanding balance");
         }
 
+        validatePaymentMethod(method);
+
         s.paid = s.paid.add(a);
         sales.save(s);
 
-        return savePayment(
-                s, a, method, reference);
+        return savePayment(s, a, method, reference);
     }
 
     private Payment savePayment(
@@ -1030,7 +1155,6 @@ p.bagWeightKg = bagWeightKg.setScale(
         validatePaymentMethod(method);
 
         Payment p = new Payment();
-
         p.sale = s;
         p.amount = amount;
         p.method = method;
@@ -1061,8 +1185,10 @@ p.bagWeightKg = bagWeightKg.setScale(
     }
 
     public BigDecimal inventoryValue() {
+
         return products.findAll().stream()
                 .map(p -> {
+
                     BigDecimal bags = p.purchasePrice.multiply(
                             BigDecimal.valueOf(p.stock));
 
