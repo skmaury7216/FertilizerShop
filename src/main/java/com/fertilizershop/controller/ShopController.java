@@ -180,6 +180,32 @@ public class ShopController {
     }
 
     // =====================================
+    // DELETE PRODUCT (SOFT DELETE)
+    // =====================================
+
+    @PostMapping("/products/{id}/delete")
+    String deleteProduct(
+            @PathVariable Long id,
+            RedirectAttributes attrs) {
+
+        try {
+            service.deleteProduct(id);
+
+            attrs.addFlashAttribute(
+                    "message",
+                    "Product deleted successfully");
+
+        } catch (IllegalArgumentException e) {
+
+            attrs.addFlashAttribute(
+                    "error",
+                    e.getMessage());
+        }
+
+        return "redirect:/products";
+    }
+
+    // =====================================
     // CUSTOMERS
     // =====================================
 

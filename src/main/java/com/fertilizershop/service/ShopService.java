@@ -189,6 +189,34 @@ public class ShopService {
     }
 
     // =====================================
+    // SAFE PRODUCT DELETE (SOFT DELETE)
+    // =====================================
+
+    @Transactional
+    public void deleteProduct(Long id) {
+
+        if (id == null) {
+            throw new IllegalArgumentException(
+                    "Invalid product ID");
+        }
+
+        Product product = products.findById(id)
+                .orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "Product not found"));
+
+        if (!product.active) {
+            throw new IllegalArgumentException(
+                    "Product is already deleted");
+        }
+
+        // Hide product without deleting its history.
+        product.active = false;
+
+        products.save(product);
+    }
+
+    // =====================================
     // CUSTOMER MANAGEMENT
     // =====================================
 
