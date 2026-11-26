@@ -22,9 +22,6 @@ pipeline {
 
         DB_URL = 'jdbc:mysql://fertilizershop-mysql:3306/fertilizershop_db'
         DB_USER = 'fertilizershop_user'
-
-        // Version assigned in Prepare Version stage
-        DEPLOY_VERSION = ''
     }
 
     stages {
@@ -44,11 +41,16 @@ pipeline {
         stage('Prepare Version') {
             steps {
                 script {
-                    env.DEPLOY_VERSION = sh(
+                    def nextVersion = sh(
                         script: '''
                             set -eu
 
                             VERSION_FILE="$JENKINS_HOME/fertilizershop-deployed-version.txt"
+
+                            test -w "$JENKINS_HOME" || {
+                                echo "ERROR: Jenkins home is not writable"
+                                exit 1
+                            }
 
                             if [ ! -f "$VERSION_FILE" ]; then
                                 echo "1.0"
@@ -64,6 +66,12 @@ pipeline {
                         ''',
                         returnStdout: true
                     ).trim()
+
+                    if (!(nextVersion ==~ /^[0-9]+\\.[0-9]+$/)) {
+                        error("Invalid deployment version: ${nextVersion}")
+                    }
+
+                    env.DEPLOY_VERSION = nextVersion
 
                     echo "Preparing version V ${env.DEPLOY_VERSION}"
                 }
@@ -102,6 +110,26 @@ pipeline {
             }
         }
 
+        stage('Validate Deployment Settings') {
+            steps {
+                sh '''
+                    set -eu
+
+                    test -n "${DEPLOY_VERSION:-}" || {
+                        echo "ERROR: DEPLOY_VERSION is missing"
+                        exit 1
+                    }
+
+                    echo "$DEPLOY_VERSION" |
+                        grep -Eq '^[0-9]+[.][0-9]+$'
+
+                    docker image inspect "$IMAGE_NAME" >/dev/null
+
+                    echo "Deployment settings valid: V $DEPLOY_VERSION"
+                '''
+            }
+        }
+
         stage('Deploy on Ubuntu VM') {
             steps {
                 withCredentials([
@@ -123,8 +151,8 @@ pipeline {
                         export SHOP_ADMIN_USER="$SHOP_USER"
                         export SHOP_ADMIN_PASSWORD="$SHOP_PASS"
 
-                        # This replaces only the app container.
-                        # Do not remove MySQL container or volumes.
+                        # Remove only the application container.
+                        # MySQL and its volumes remain untouched.
                         docker rm -f "$CONTAINER_NAME" \
                             2>/dev/null || true
 
@@ -142,7 +170,7 @@ pipeline {
                             -e SHOP_APP_VERSION="$DEPLOY_VERSION" \
                             "$IMAGE_NAME"
 
-                        echo "Started FertilizerShop V $DEPLOY_VERSION"
+                        echo "FertilizerShop V $DEPLOY_VERSION started"
                     '''
                 }
             }
@@ -154,6 +182,7 @@ pipeline {
                     set -eu
 
                     for i in $(seq 1 40); do
+
                         if curl -fsS -o /dev/null \
                             http://127.0.0.1:8090/login; then
 
@@ -170,7 +199,9 @@ pipeline {
                     done
 
                     echo "Deployment verification failed"
+
                     docker logs --tail 80 fertilizershop
+
                     exit 1
                 '''
             }
@@ -190,7 +221,7 @@ pipeline {
 
                     mv -f "$TEMP_FILE" "$VERSION_FILE"
 
-                    echo "Deployment version recorded: V $DEPLOY_VERSION"
+                    echo "Successfully recorded V $DEPLOY_VERSION"
                 '''
             }
         }
@@ -198,11 +229,11 @@ pipeline {
 
     post {
         success {
-            echo "FertilizerShop CI/CD SUCCESS"
+            echo "FertilizerShop CI/CD SUCCESS: V ${env.DEPLOY_VERSION}"
         }
 
         failure {
-            echo "FertilizerShop CI/CD FAILED"
+            echo 'FertilizerShop CI/CD FAILED'
         }
     }
 }
