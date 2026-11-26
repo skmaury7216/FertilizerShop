@@ -1,174 +1,480 @@
+
 <!doctype html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
     <title>Invoice • Maurya Fertilizer Shop</title>
+
     <link rel="stylesheet" th:href="@{/css/main.css}">
 </head>
+
 <body>
+
 <div class="layout no-print-shell">
+
+    <!-- Sidebar -->
     <div th:replace="~{fragments :: sidebar}"></div>
 
     <main class="main">
+
+        <!-- Topbar -->
         <div th:replace="~{fragments :: topbar}"></div>
+
+        <!-- Flash Messages -->
         <div th:replace="~{fragments :: flash}"></div>
 
+        <!-- Invoice Buttons -->
         <div class="invoice-actions no-print">
-            <a th:href="@{/sales}" class="button light">← Back to Sales</a>
-            <button onclick="window.print()" class="button">Print Invoice</button>
+
+            <a th:href="@{/sales}"
+               class="button light">
+                ← Back to Sales
+            </a>
+
+            <button type="button"
+                    onclick="window.print()"
+                    class="button">
+                Print Invoice
+            </button>
+
         </div>
 
+        <!-- MAIN INVOICE -->
         <div class="invoice-sheet">
 
-            <!-- Header -->
+            <!-- HEADER -->
             <div class="invoice-top">
+
                 <div class="invoice-company">
+
                     <h2>Maurya Fertilizer Shop</h2>
-                    <p>Andhi Andha Ashram, </p>
-                    <p>Barun, 224127 Ayodhya</p>
+
+                    <p>Andhi Andha Ashram</p>
+                    <p>Barun, Ayodhya</p>
                     <p>Uttar Pradesh, India</p>
-                    <p th:text="${sale.customer != null ? sale.customer.phone : ''}"></p>
+
                 </div>
 
                 <div class="invoice-title-block">
                     <h1>INVOICE</h1>
                 </div>
+
             </div>
 
-            <!-- Invoice meta -->
+            <!-- INVOICE DETAILS -->
             <div class="invoice-meta-box">
+
+                <!-- Left: Invoice Information -->
                 <div class="invoice-meta-left">
-                    <p><strong>Invoice #</strong>
-                        <span th:text="${sale.id}">001</span>
+
+                    <p>
+                        <strong>Invoice #:</strong>
+                        <span th:text="${sale.id}">
+                            001
+                        </span>
                     </p>
+
                     <p>
                         <strong>Invoice Date:</strong>
-                        <span th:text="${#temporals.format(sale.createdAt,'dd/MM/yyyy')}">08/08/2027</span>
+                        <span th:text="${#temporals.format(sale.createdAt, 'dd/MM/yyyy')}">
+                            25/11/2026
+                        </span>
                     </p>
+
                     <p>
-                        <strong>Due Date:</strong>
-                        <span th:text="${#temporals.format(sale.createdAt,'dd/MM/yyyy')}">08/08/2027</span>
+                        <strong>Payment Status:</strong>
+                        <span th:text="${invoiceStatus}">
+                            Paid
+                        </span>
                     </p>
+
                 </div>
 
+                <!-- Right: Customer Information -->
                 <div class="invoice-meta-right">
-                    <p><strong>Bill To</strong></p>
-                    <p th:text="${sale.customer != null ? sale.customer.name : ''}">Customer Name</p>
-                    <p th:text="${sale.customer != null ? sale.customer.village : ''}">Street Address</p>
-                    <p th:text="${sale.customer != null ? sale.customer.phone : ''}">Phone</p>
-                    <p th:if="${sale.customer != null and sale.customer.aadharNumber != null and !#strings.isEmpty(sale.customer.aadharNumber)}"
-                       th:text="'Aadhar: ' + ${sale.customer.aadharNumber}">
-                        Aadhar: 0000 0000 0000
+
+                    <p><strong>BILL TO</strong></p>
+
+                    <p>
+                        <strong>Name:</strong>
+                        <span th:text="${sale.customer != null ? sale.customer.name : 'N/A'}">
+                            Customer Name
+                        </span>
                     </p>
+
+                    <p th:if="${sale.customer != null and sale.customer.village != null and !#strings.isEmpty(sale.customer.village)}">
+                        <strong>Village:</strong>
+                        <span th:text="${sale.customer.village}">
+                            Village
+                        </span>
+                    </p>
+
+                    <p th:if="${sale.customer != null and sale.customer.address != null and !#strings.isEmpty(sale.customer.address)}">
+                        <strong>Address:</strong>
+                        <span th:text="${sale.customer.address}">
+                            Address
+                        </span>
+                    </p>
+
+                    <p th:if="${sale.customer != null and sale.customer.phone != null and !#strings.isEmpty(sale.customer.phone)}">
+                        <strong>Mobile:</strong>
+                        <span th:text="${sale.customer.phone}">
+                            Mobile Number
+                        </span>
+                    </p>
+
+                    <!-- MASKED AADHAAR -->
+                    <!-- Only last four digits are stored -->
+                    <p th:if="${sale.customer != null and sale.customer.aadhaarLast4 != null and !#strings.isEmpty(sale.customer.aadhaarLast4)}">
+
+                        <strong>Aadhaar:</strong>
+
+                        <span th:text="${sale.customer.maskedAadhaar}">
+                            XXXX XXXX 1234
+                        </span>
+
+                    </p>
+
                 </div>
+
             </div>
 
-            <!-- Items table -->
+            <!-- PRODUCT DETAILS -->
             <table class="invoice-table">
-                <thead>
-                <tr>
-                    <th>NO.</th>
-                    <th>DESCRIPTION</th>
-                    <th>QTY</th>
-                    <th>PRICE</th>
-                    <th>TOTAL</th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr th:each="item, stat : ${invoiceItems}">
-                    <td th:text="${stat.count}">1</td>
-                    <td th:text="${item.product.name}">DAP 50 KG</td>
-                    <td th:text="${item.quantity}">1</td>
-                    <td th:text="'₹' + ${item.unitPrice}">₹100.00</td>
-                    <td th:text="'₹' + ${item.total}">₹100.00</td>
-                </tr>
 
-                <!-- empty rows for print look -->
-                <tr th:if="${#lists.size(invoiceItems) < 8}" th:each="i : ${#numbers.sequence(1, 8 - #lists.size(invoiceItems))}">
-                    <td>&nbsp;</td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                </tr>
+                <thead>
+                    <tr>
+                        <th>NO.</th>
+                        <th>DESCRIPTION</th>
+                        <th>QTY</th>
+                        <th>PRICE</th>
+                        <th>TOTAL</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    <tr th:each="item, stat : ${invoiceItems}">
+
+                        <td th:text="${stat.count}">
+                            1
+                        </td>
+
+                        <td th:text="${item.product.name}">
+                            Fertilizer
+                        </td>
+
+                        <!-- Weight-based sales -->
+                        <td th:if="${item.weightKg != null}">
+
+                            <!-- Grams -->
+                            <span th:if="${item.weightUnit == 'g'}"
+                                  th:text="|${item.weightKg * 1000} g|">
+                                500 g
+                            </span>
+
+                            <!-- Kilograms -->
+                            <span th:if="${item.weightUnit == 'kg'}"
+                                  th:text="|${item.weightKg} kg|">
+                                1 kg
+                            </span>
+
+                            <!-- Full bags: show actual saved weight -->
+                            <span th:if="${item.weightUnit == 'bag'}"
+                                  th:text="|${item.weightKg} kg (bag)|">
+                                50 kg (bag)
+                            </span>
+
+                            <!-- Fallback -->
+                            <span th:if="${item.weightUnit != 'g' and item.weightUnit != 'kg' and item.weightUnit != 'bag'}"
+                                  th:text="|${item.weightKg} kg|">
+                                Weight
+                            </span>
+
+                        </td>
+
+                        <!-- Old bag sales -->
+                        <td th:if="${item.weightKg == null}"
+                            th:text="|${item.quantity} Bag|">
+                            1 Bag
+                        </td>
+
+                        <td th:text="|₹${item.unitPrice}|">
+                            ₹100.00
+                        </td>
+
+                        <td th:text="|₹${item.total}|">
+                            ₹100.00
+                        </td>
+
+                    </tr>
+
+                    <!-- Empty rows for professional print layout -->
+                    <th:block th:if="${#lists.size(invoiceItems) < 8}">
+
+                        <tr th:each="i : ${#numbers.sequence(1, 8 - #lists.size(invoiceItems))}">
+                            <td>&nbsp;</td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+
+                    </th:block>
+
                 </tbody>
+
             </table>
 
-            <!-- Payment + totals -->
+            <!-- PAYMENT AND TOTALS -->
             <div class="invoice-bottom-grid">
+
+                <!-- Payment Information -->
                 <div class="invoice-payment-box">
-                    <h4>PAYMENT METHOD</h4>
+
+                    <h4>PAYMENT DETAILS</h4>
+
                     <p>
                         <strong>Status:</strong>
-                        <span th:text="${invoiceStatus}">Paid</span>
+                        <span th:text="${invoiceStatus}">
+                            Paid
+                        </span>
                     </p>
+
                     <p>
                         <strong>Paid Amount:</strong>
-                        <span th:text="'₹' + ${invoicePaid}">₹0.00</span>
+                        <span th:text="|₹${invoicePaid}|">
+                            ₹0.00
+                        </span>
                     </p>
+
                     <p>
-                        <strong>Payment Note:</strong>
-                        Manual / Offline Entry
+                        <strong>Due Amount:</strong>
+                        <span th:text="|₹${invoiceDue}|">
+                            ₹0.00
+                        </span>
                     </p>
-                    <p>
+
+                    <p th:if="${payments != null and !#lists.isEmpty(payments)}">
+
+                        <strong>Last Payment Method:</strong>
+
+                        <span th:text="${payments[0].method}">
+                            Cash
+                        </span>
+
+                    </p>
+
+                    <p th:if="${payments != null and !#lists.isEmpty(payments) and payments[0].reference != null and !#strings.isEmpty(payments[0].reference)}">
+
                         <strong>Reference:</strong>
-                        <span th:if="${payments != null and !#lists.isEmpty(payments)}"
-                              th:text="${payments[0].reference}">N/A</span>
-                        <span th:if="${payments == null or #lists.isEmpty(payments)}">N/A</span>
+
+                        <span th:text="${payments[0].reference}">
+                            Payment Reference
+                        </span>
+
                     </p>
+
                 </div>
 
+                <!-- Invoice Summary -->
                 <div class="invoice-summary-box">
+
                     <table>
+
                         <tr>
                             <td>SUBTOTAL</td>
-                            <td th:text="'₹' + ${invoiceTotal}">₹0.00</td>
+                            <td th:text="|₹${invoiceTotal}|">
+                                ₹0.00
+                            </td>
                         </tr>
+
                         <tr>
                             <td>DISCOUNT</td>
                             <td>₹0.00</td>
                         </tr>
+
                         <tr>
                             <td>TAX</td>
                             <td>₹0.00</td>
                         </tr>
+
                         <tr class="grand-total">
                             <td>TOTAL</td>
-                            <td th:text="'₹' + ${invoiceTotal}">₹0.00</td>
+                            <td th:text="|₹${invoiceTotal}|">
+                                ₹0.00
+                            </td>
                         </tr>
+
                     </table>
+
                 </div>
+
             </div>
 
-            <!-- Notes + Logo -->
+            <!-- NOTES AND SHOP LOGO -->
             <div class="invoice-footer-grid">
+
                 <div class="invoice-notes">
-                    <h4>ADDITIONAL NOTES AND TERMS :</h4>
+
+                    <h4>ADDITIONAL NOTES AND TERMS:</h4>
+
                     <p>
                         Thank you for your purchase.
-                        Goods once sold will be counted as final.
-                        Please verify quantity, weight, and amount at the time of billing.
+                        Please verify the product quantity,
+                        weight and amount at the time of billing.
                     </p>
+
                     <p th:if="${invoiceDue.signum() > 0}">
+
                         Outstanding Balance:
-                        <strong th:text="'₹' + ${invoiceDue}">₹0.00</strong>
+
+                        <strong th:text="|₹${invoiceDue}|">
+                            ₹0.00
+                        </strong>
+
                     </p>
+
                 </div>
 
+                <!-- SHOP LOGO -->
                 <div class="invoice-logo-box">
-    <img th:src="@{/images/logo.png}"
-         src="/images/logo.png"
-         alt="Maurya Fertilizer Shop Logo"
-         class="invoice-logo">
-</div>
+
+                    <img th:src="@{/images/logo.png}"
+                         src="/images/logo.png"
+                         alt="Maurya Fertilizer Shop Logo"
+                         class="invoice-logo">
+
                 </div>
+
             </div>
 
         </div>
+        <!-- END MAIN INVOICE -->
+
+        <!-- OUTSTANDING PAYMENT FORM -->
+        <!-- Hidden while printing -->
+        <section class="panel no-print"
+                 th:if="${invoiceDue.signum() > 0}">
+
+            <h3>Record Outstanding Payment</h3>
+
+            <p>
+                Remaining Due:
+                <strong th:text="|₹${invoiceDue}|">
+                    ₹0.00
+                </strong>
+            </p>
+
+            <form th:action="@{/sales/{id}/payments(id=${sale.id})}"
+                  method="post"
+                  class="stack-form">
+
+                <label>
+                    Payment Amount
+
+                    <input type="number"
+                           name="amount"
+                           min="0.01"
+                           step="0.01"
+                           th:attr="max=${invoiceDue}"
+                           required>
+                </label>
+
+                <label>
+                    Payment Method
+
+                    <select name="method" required>
+                        <option value="Cash">Cash</option>
+                        <option value="UPI (verified offline)">
+                            UPI (verified offline)
+                        </option>
+                        <option value="Bank Transfer (verified offline)">
+                            Bank Transfer (verified offline)
+                        </option>
+                    </select>
+                </label>
+
+                <label>
+                    Reference (Optional)
+
+                    <input type="text"
+                           name="reference"
+                           placeholder="Transaction reference">
+                </label>
+
+                <button type="submit" class="button">
+                    Record Payment
+                </button>
+
+            </form>
+
+        </section>
+
+        <!-- PAYMENT HISTORY -->
+        <!-- Hidden while printing -->
+        <section class="panel no-print">
+
+            <h3>Payment History</h3>
+
+            <div class="table-scroll">
+
+                <table>
+
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Method</th>
+                            <th>Reference</th>
+                            <th>Amount</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        <tr th:each="payment : ${payments}">
+
+                            <td th:text="${#temporals.format(payment.paidAt, 'dd/MM/yyyy HH:mm')}">
+                                Date
+                            </td>
+
+                            <td th:text="${payment.method}">
+                                Cash
+                            </td>
+
+                            <td th:text="${payment.reference != null ? payment.reference : '-'}">
+                                Reference
+                            </td>
+
+                            <td th:text="|₹${payment.amount}|">
+                                ₹0.00
+                            </td>
+
+                        </tr>
+
+                        <tr th:if="${#lists.isEmpty(payments)}">
+                            <td colspan="4" class="empty">
+                                No payment history yet.
+                            </td>
+                        </tr>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </section>
+
     </main>
+
 </div>
 
 <script th:src="@{/js/main.js}"></script>
+
 </body>
 </html>
